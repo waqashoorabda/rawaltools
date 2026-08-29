@@ -1,0 +1,121 @@
+@import "tailwindcss";
+
+@layer utilities {
+  .font-serif-editorial {
+    font-family: 'Playfair Display', 'Instrument Serif', Georgia, serif;
+  }
+  .font-mono-code {
+    font-family: 'JetBrains Mono', monospace;
+  }
+}
+
+/* Theme Design Variables */
+:root,
+[data-theme="ecom_light"] {
+  --color-bg: #F8F9FA;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F3F4F6;
+  --color-border: #E5E7EB;
+  --color-border-hover: #EAB308;
+  --color-accent: #FACC15;
+  --color-accent-hover: #EAB308;
+  --color-accent-text: #000000;
+  --color-text-main: #111827;
+  --color-text-muted: #6B7280;
+  --color-nav-bg: #FFFFFF;
+  --color-nav-border: #E5E7EB;
+  --color-chip-bg: #FEF9C3;
+  --color-chip-text: #854D0E;
+  --color-whatsapp: #22C55E;
+}
+
+[data-theme="industrial_yellow"] {
+  --color-bg: #0E1015;
+  --color-surface: #15181F;
+  --color-surface-hover: #1C2029;
+  --color-border: #262B35;
+  --color-border-hover: #F59E0B;
+  --color-accent: #F59E0B;
+  --color-accent-hover: #D97706;
+  --color-accent-text: #000000;
+  --color-text-main: #F3F4F6;
+  --color-text-muted: #8E98A8;
+  --color-nav-bg: #0A0C10;
+  --color-nav-border: #222733;
+  --color-chip-bg: #1C212B;
+  --color-chip-text: #F59E0B;
+  --color-whatsapp: #22C55E;
+}
+
+[data-theme="modern_light"] {
+  --color-bg: #F8FAFC;
+  --color-surface: #FFFFFF;
+  --color-surface-hover: #F1F5F9;
+  --color-border: #E2E8F0;
+  --color-border-hover: #2563EB;
+  --color-accent: #2563EB;
+  --color-accent-hover: #1D4ED8;
+  --color-accent-text: #FFFFFF;
+  --color-text-main: #0F172A;
+  --color-text-muted: #64748B;
+  --color-nav-bg: #FFFFFF;
+  --color-nav-border: #E2E8F0;
+  --color-chip-bg: #EFF6FF;
+  --color-chip-text: #1D4ED8;
+  --color-whatsapp: #16A34A;
+}
+
+[data-theme="power_red"] {
+  --color-bg: #08090C;
+  --color-surface: #111318;
+  --color-surface-hover: #181B22;
+  --color-border: #222631;
+  --color-border-hover: #EF4444;
+  --color-accent: #EF4444;
+  --color-accent-hover: #DC2626;
+  --color-accent-text: #FFFFFF;
+  --color-text-main: #F3F4F6;
+  --color-text-muted: #94A3B8;
+  --color-nav-bg: #060709;
+  --color-nav-border: #1E222C;
+  --color-chip-bg: #1C1215;
+  --color-chip-text: #F87171;
+  --color-whatsapp: #22C55E;
+}
+
+[data-theme="titanium_bronze"] {
+  --color-bg: #0D0D0E;
+  --color-surface: #171719;
+  --color-surface-hover: #222226;
+  --color-border: #27272A;
+  --color-border-hover: #D97706;
+  --color-accent: #D97706;
+  --color-accent-hover: #B45309;
+  --color-accent-text: #000000;
+  --color-text-main: #F4F4F5;
+  --color-text-muted: #A1A1AA;
+  --color-nav-bg: #09090B;
+  --color-nav-border: #27272A;
+  --color-chip-bg: #241B10;
+  --color-chip-text: #FBBF24;
+  --color-whatsapp: #10B981;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+  border-radius: 0px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-accent);
+}

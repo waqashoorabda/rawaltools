@@ -1,0 +1,10 @@
+{
+  "name": "Rawal Tools - Showcase & WhatsApp Orders",
+  "description": "Industrial & hardware tools showcase with direct WhatsApp ordering, admin catalog manager, image upload, and optional price quote system.",
+  "requestFramePermissions": [
+    "camera"
+  ],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
