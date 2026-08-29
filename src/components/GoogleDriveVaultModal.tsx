@@ -26,6 +26,7 @@ import { GoogleDriveFile, GoogleDriveUser, MediaCategory, MediaItem } from '../t
 import {
   signInWithGoogleDrive,
   signOutGoogleDrive,
+  disconnectGoogleDriveAccount,
   getDriveAccessToken,
   setDriveAccessToken,
   listGoogleDriveImages,
@@ -176,12 +177,14 @@ export const GoogleDriveVaultModal: React.FC<GoogleDriveVaultModalProps> = ({
   };
 
   const handleSignOut = async () => {
-    await signOutGoogleDrive();
-    setIsAuthenticated(false);
-    setDriveUser(null);
-    setDriveFiles([]);
-    setManualTokenInput('');
-    showToast('Signed out from Google Drive');
+    const res = await disconnectGoogleDriveAccount();
+    if (res.success) {
+      setIsAuthenticated(false);
+      setDriveUser(null);
+      setDriveFiles([]);
+      setManualTokenInput('');
+      showToast('Google Drive account disconnected. Ready to connect new email.');
+    }
   };
 
   const loadDriveFiles = async () => {

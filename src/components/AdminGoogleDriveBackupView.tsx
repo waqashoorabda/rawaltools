@@ -27,6 +27,8 @@ import {
   Settings,
   Database,
   Lock,
+  UserCheck,
+  Zap,
 } from 'lucide-react';
 import {
   GoogleDriveFile,
@@ -37,7 +39,10 @@ import {
 import {
   signInWithGoogleDrive,
   signOutGoogleDrive,
+  disconnectGoogleDriveAccount,
   getDriveAccessToken,
+  getConnectedDriveUser,
+  getStoredDriveSession,
   initDriveAuth,
 } from '../services/googleDriveService';
 import {
@@ -58,6 +63,7 @@ import {
   SyncLogEntry,
   AppFullBackupPayload,
   DRIVE_BACKUP_FOLDER_NAME,
+  syncStoreDataToNewGoogleDriveAccount,
 } from '../services/googleDriveBackupService';
 import { formatBytes } from '../utils/imageUpload';
 
@@ -73,10 +79,15 @@ export const AdminGoogleDriveBackupView: React.FC<AdminGoogleDriveBackupViewProp
   onRestoreComplete,
 }) => {
   // Auth state
-  const [driveUser, setDriveUser] = useState<GoogleDriveUser | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [driveUser, setDriveUser] = useState<GoogleDriveUser | null>(() => getConnectedDriveUser());
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
+    const session = getStoredDriveSession();
+    return !!session.user && (session.isTokenValid || !!session.accessToken);
+  });
   const [isAuthenticating, setIsAuthenticating] = useState<boolean>(false);
   const [authError, setAuthError] = useState<string | null>(null);
+  const [isDisconnectModalOpen, setIsDisconnectModalOpen] = useState<boolean>(false);
+  const [isAutoSyncingNewAccount, setIsAutoSyncingNewAccount] = useState<boolean>(false);
 
   // Auto-sync configuration toggles
   const [autoSyncOn, setAutoSyncOn] = useState<boolean>(() => isAutoSyncEnabled());
@@ -101,11 +112,11 @@ export const AdminGoogleDriveBackupView: React.FC<AdminGoogleDriveBackupViewProp
   // Sync Logs
   const [syncLogs, setSyncLogs] = useState<SyncLogEntry[]>(() => getSyncLogs());
 
-  // Initialize Drive Auth listener
+  // Initialize Drive Auth listener and restore persistent session
   useEffect(() => {
     const unsub = initDriveAuth(
       (user, token) => {
-        if (user && token) {
+        if (user) {
           setIsAuthenticated(true);
           setDriveUser({
             uid: (user as any).uid || 'google_user',
@@ -117,8 +128,11 @@ export const AdminGoogleDriveBackupView: React.FC<AdminGoogleDriveBackupViewProp
         }
       },
       () => {
-        setIsAuthenticated(false);
-        setDriveUser(null);
+        const active = getStoredDriveSession();
+        if (!active.hasStoredUser) {
+          setIsAuthenticated(false);
+          setDriveUser(null);
+        }
       }
     );
 
@@ -136,7 +150,7 @@ export const AdminGoogleDriveBackupView: React.FC<AdminGoogleDriveBackupViewProp
 
   const showToast = (text: string, type: 'success' | 'error' = 'success') => {
     setToastMessage({ text, type });
-    setTimeout(() => setToastMessage(null), 4000);
+    setTimeout(() => setToastMessage(null), 5000);
   };
 
   const handleGoogleSignIn = async () => {
@@ -147,7 +161,28 @@ export const AdminGoogleDriveBackupView: React.FC<AdminGoogleDriveBackupViewProp
       if (res) {
         setIsAuthenticated(true);
         setDriveUser(res.user);
-        showToast(`Connected to Google Drive as ${res.user.displayName || res.user.email}`);
+
+        // Check if this is a newly connected email (or switched account)
+        if (res.isNewAccount) {
+          setIsAutoSyncingNewAccount(true);
+          showToast(`نیا گوگل اکاؤنٹ منسلک ہو گیا (${res.user.email})! ڈیٹا سنک ہو رہا ہے...`);
+          try {
+            const syncResult = await syncStoreDataToNewGoogleDriveAccount(res.user.email);
+            showToast(
+              `🎉 تمام اسٹور ڈیٹا (${syncResult.totalProducts} پروڈکٹس، سیٹنگز اور میڈیا) خودکار طور پر نئے گوگل ڈرائیو پر منتقل ہو گیا ہے!`
+            );
+          } catch (syncErr: any) {
+            console.warn('Auto-sync to new account notice:', syncErr);
+            showToast(`Connected as ${res.user.email}. (Manual sync available)`);
+          } finally {
+            setIsAutoSyncingNewAccount(false);
+          }
+        } else {
+          showToast(`Google Drive connected: ${res.user.displayName || res.user.email}`);
+        }
+
+        setLastSyncTime(new Date().toISOString());
+        setSyncLogs(getSyncLogs());
         await loadDriveBackupsList();
       }
     } catch (err: any) {
@@ -159,12 +194,15 @@ export const AdminGoogleDriveBackupView: React.FC<AdminGoogleDriveBackupViewProp
     }
   };
 
-  const handleGoogleSignOut = async () => {
-    await signOutGoogleDrive();
+  const handleConfirmDisconnect = async () => {
+    const res = await disconnectGoogleDriveAccount({ skipConfirm: true });
     setIsAuthenticated(false);
     setDriveUser(null);
     setDriveBackups([]);
-    showToast('Signed out from Google Drive.');
+    setIsDisconnectModalOpen(false);
+    showToast(
+      `گوگل ڈرائیو اکاؤنٹ (${res.disconnectedEmail || 'Email'}) ڈسکیکٹ ہو گیا۔ نیا ای میل کنیکٹ کرنے پر سارا ڈیٹا خودکار نئے اکاؤنٹ پر سنک ہو جائے گا۔`
+    );
   };
 
   const loadDriveBackupsList = async () => {
@@ -354,32 +392,37 @@ export const AdminGoogleDriveBackupView: React.FC<AdminGoogleDriveBackupViewProp
           {/* Connection Actions */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
             {isAuthenticated && driveUser ? (
-              <div className="flex items-center gap-3 p-2 bg-[#171E2E] border border-[#2B3852] rounded-xl">
+              <div className="flex items-center gap-3 p-2 bg-[#171E2E] border border-amber-400/30 rounded-xl shadow-md">
                 {driveUser.photoUrl ? (
                   <img
                     src={driveUser.photoUrl}
                     alt={driveUser.displayName}
-                    className="w-10 h-10 rounded-full border border-amber-400/40 object-cover"
+                    className="w-10 h-10 rounded-full border border-amber-400/60 object-cover"
                   />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-amber-400/20 text-amber-400 flex items-center justify-center font-bold text-sm">
+                  <div className="w-10 h-10 rounded-full bg-amber-400/20 text-amber-400 flex items-center justify-center font-bold text-sm border border-amber-400/40">
                     {driveUser.displayName?.charAt(0) || 'G'}
                   </div>
                 )}
                 <div className="text-left pr-2">
-                  <div className="text-xs font-bold text-white truncate max-w-[150px]">
-                    {driveUser.displayName}
+                  <div className="text-xs font-bold text-white flex items-center gap-1.5 truncate max-w-[170px]">
+                    <span>{driveUser.displayName}</span>
+                    <span className="px-1.5 py-0.2 bg-emerald-500/20 text-emerald-400 text-[9px] rounded font-mono font-semibold">
+                      مستقل لاگ ان
+                    </span>
                   </div>
-                  <div className="text-[10px] text-slate-400 font-mono truncate max-w-[150px]">
+                  <div className="text-[11px] text-amber-300 font-mono font-bold truncate max-w-[170px]">
                     {driveUser.email}
                   </div>
                 </div>
                 <button
-                  onClick={handleGoogleSignOut}
-                  className="p-2 text-slate-400 hover:text-rose-400 bg-[#101420] hover:bg-rose-950/30 rounded-lg border border-slate-700/60 transition-colors"
-                  title="Disconnect Google Drive"
+                  type="button"
+                  onClick={() => setIsDisconnectModalOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-2 text-rose-300 hover:text-white bg-rose-950/40 hover:bg-rose-600 rounded-lg border border-rose-700/50 text-xs font-mono font-bold transition-all cursor-pointer"
+                  title="Disconnect account to connect another email"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3.5 h-3.5" />
+                  <span className="hidden sm:inline">ڈسکیکٹ / تبدیل</span>
                 </button>
               </div>
             ) : (
@@ -398,6 +441,16 @@ export const AdminGoogleDriveBackupView: React.FC<AdminGoogleDriveBackupViewProp
             )}
           </div>
         </div>
+
+        {/* Informative notification if newly connected and syncing */}
+        {isAutoSyncingNewAccount && (
+          <div className="mt-4 p-3.5 bg-amber-950/60 border border-amber-500/60 rounded-xl text-xs text-amber-200 flex items-center gap-3 font-sans animate-pulse">
+            <RefreshCw className="w-5 h-5 text-amber-400 animate-spin shrink-0" />
+            <div>
+              <strong className="font-bold">نئے گوگل اکاؤنٹ کے ساتھ پہلی بار سنک ہو رہا ہے:</strong> تمام موجودہ پروڈکٹس، کیٹلاگ ڈیٹا اور سیٹنگز اس نئے گوگل ڈرائیو میں خودکار محفوظ کی جا رہی ہیں۔ براہ کرم چند سیکنڈ انتظار کریں۔
+            </div>
+          </div>
+        )}
 
         {authError && (
           <div className="mt-4 p-3 bg-rose-950/40 border border-rose-800/50 rounded-xl text-xs text-rose-300 flex items-center gap-2 font-mono">
@@ -809,6 +862,56 @@ export const AdminGoogleDriveBackupView: React.FC<AdminGoogleDriveBackupViewProp
               >
                 {isRestoring ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
                 <span>Confirm & Restore All Data</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Disconnect & Switch Email Confirmation Modal */}
+      {isDisconnectModalOpen && (
+        <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="bg-[#0E121B] border border-rose-500/40 rounded-2xl max-w-lg w-full p-6 space-y-5 text-[#F5F5F5] font-sans shadow-2xl">
+            <div className="flex items-center gap-3">
+              <div className="w-11 h-11 rounded-xl bg-rose-500/20 text-rose-400 flex items-center justify-center shrink-0 border border-rose-500/30">
+                <LogOut className="w-6 h-6" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-white font-mono">گوگل ڈرائیو اکاؤنٹ ڈسکیکٹ کریں</h3>
+                <p className="text-xs text-slate-400 font-mono">{driveUser?.email || 'Connected Account'}</p>
+              </div>
+            </div>
+
+            <div className="p-4 bg-[#141A26] border border-[#253248] rounded-xl space-y-3 text-xs">
+              <p className="text-slate-200 leading-relaxed font-sans">
+                کیا آپ موجودہ گوگل اکاؤنٹ <strong className="text-amber-400 font-mono">{driveUser?.email}</strong> کو ڈسکیکٹ کرنا چاہتے ہیں؟
+              </p>
+              <div className="p-3 bg-emerald-950/30 border border-emerald-900/50 rounded-lg text-emerald-300 space-y-1.5">
+                <div className="font-bold flex items-center gap-1.5">
+                  <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                  <span>خودکار ڈیٹا منتقلی (Auto-Sync to New Email):</span>
+                </div>
+                <p className="text-[11px] text-slate-300 font-sans">
+                  ڈسکیکٹ کرنے کے بعد جیسے ہی آپ کسی دوسرے ای میل سے لاگ ان کریں گے، آپ کا تمام اسٹور ڈیٹا (پروڈکٹس، سیٹنگز، میڈیا اور بیک اپ) خودکار طور پر اس نئے گوگل ڈرائیو اکاؤنٹ پر منتقل و محفوظ ہو جائے گا۔
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setIsDisconnectModalOpen(false)}
+                className="px-4 py-2.5 text-xs font-mono uppercase tracking-wider text-slate-400 hover:text-white cursor-pointer"
+              >
+                منسوخ کریں (Cancel)
+              </button>
+              <button
+                type="button"
+                onClick={handleConfirmDisconnect}
+                className="px-5 py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold font-mono text-xs uppercase tracking-wider rounded-xl transition-all shadow-md cursor-pointer flex items-center gap-1.5"
+              >
+                <LogOut className="w-4 h-4" />
+                <span>ڈسکیکٹ کریں (Disconnect)</span>
               </button>
             </div>
           </div>

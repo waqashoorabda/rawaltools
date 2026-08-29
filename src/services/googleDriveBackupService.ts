@@ -19,6 +19,8 @@ import {
   signInWithGoogleDrive,
   findOrCreateDriveFolder,
   fetchGoogleProfile,
+  saveLastSyncedDriveEmail,
+  getLastSyncedDriveEmail,
 } from './googleDriveService';
 import {
   loadStoredProducts,
@@ -380,6 +382,54 @@ export async function uploadBackupToGoogleDrive(
     webViewLink: uploaded.webViewLink,
     webContentLink: uploaded.webContentLink,
     size: fileSize,
+  };
+}
+
+/**
+ * Automatically sync all stored application data, products, settings, and media
+ * to a newly connected Google Drive email account.
+ */
+export async function syncStoreDataToNewGoogleDriveAccount(email: string): Promise<{
+  success: boolean;
+  backupFile: {
+    fileId: string;
+    name: string;
+    size: number;
+    webViewLink?: string;
+  };
+  totalProducts: number;
+  totalMedia: number;
+}> {
+  const token = getDriveAccessToken();
+  if (!token) {
+    throw new Error('Please connect to Google Drive before syncing.');
+  }
+
+  // 1. Gather all current application data
+  const backupPayload = gatherCompleteAppBackupData('manual_sync', `Auto-Sync for ${email}`);
+  
+  // 2. Upload initial full snapshot to the new Google Drive account
+  const uploaded = await uploadBackupToGoogleDrive(backupPayload, 'manual_sync');
+
+  // 3. Mark this email as synced
+  saveLastSyncedDriveEmail(email);
+
+  // 4. Record high-priority sync log entry
+  addSyncLog({
+    timestamp: new Date().toISOString(),
+    trigger: 'manual_sync',
+    status: 'success',
+    fileName: uploaded.name,
+    fileId: uploaded.fileId,
+    fileSize: uploaded.size,
+    itemsCount: backupPayload.summary.totalProducts,
+  });
+
+  return {
+    success: true,
+    backupFile: uploaded,
+    totalProducts: backupPayload.summary.totalProducts,
+    totalMedia: backupPayload.summary.totalMediaItems,
   };
 }
 

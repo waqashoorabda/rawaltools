@@ -19,7 +19,7 @@ const driveProvider = new GoogleAuthProvider();
 driveProvider.addScope('https://www.googleapis.com/auth/drive');
 driveProvider.addScope('https://www.googleapis.com/auth/drive.file');
 
-// In-Memory Token Cache (MANDATORY: Never store sensitive secret in localStorage or sessionStorage)
+// In-Memory Token Cache
 let cachedAccessToken: string | null = null;
 let cachedDriveUser: GoogleDriveUser | null = null;
 let isSigningIn = false;
@@ -27,8 +27,141 @@ let isSigningIn = false;
 // Root folder name in Google Drive for all media assets
 export const ROOT_VAULT_FOLDER_NAME = 'RawalTools_Media_Vault';
 
+// LocalStorage Keys for persistent connection and multi-account auto-sync
+const STORAGE_KEY_CONNECTED_USER = 'rawal_drive_connected_account_v3';
+const STORAGE_KEY_TOKEN_DATA = 'rawal_drive_token_meta_v3';
+const STORAGE_KEY_LAST_SYNCED_EMAIL = 'rawal_drive_last_synced_email_v3';
+const STORAGE_KEY_PREV_DISCONNECTED_EMAIL = 'rawal_drive_prev_disconnected_email_v3';
 const CUSTOM_CLIENT_ID_KEY = 'rawal_drive_custom_client_id_v1';
 const CUSTOM_API_KEY_KEY = 'rawal_drive_custom_api_key_v1';
+
+export interface StoredDriveSession {
+  user: GoogleDriveUser | null;
+  accessToken: string | null;
+  isTokenValid: boolean;
+  hasStoredUser: boolean;
+  expiresAt?: number;
+}
+
+/**
+ * Save connected Drive session persistently so user never has to repeat login
+ */
+export function saveStoredDriveSession(
+  user: GoogleDriveUser,
+  accessToken: string,
+  expiresInSeconds = 3500
+): void {
+  try {
+    const tokenMeta = {
+      accessToken,
+      expiresAt: Date.now() + Math.max(expiresInSeconds - 60, 300) * 1000,
+      savedAt: Date.now(),
+    };
+    localStorage.setItem(STORAGE_KEY_TOKEN_DATA, JSON.stringify(tokenMeta));
+
+    const userMeta: GoogleDriveUser & { lastActiveAt: string } = {
+      ...user,
+      lastActiveAt: new Date().toISOString(),
+    };
+    localStorage.setItem(STORAGE_KEY_CONNECTED_USER, JSON.stringify(userMeta));
+
+    cachedAccessToken = accessToken;
+    cachedDriveUser = user;
+  } catch (err) {
+    console.warn('Failed to save persistent Drive session:', err);
+  }
+}
+
+/**
+ * Get stored persistent Drive session
+ */
+export function getStoredDriveSession(): StoredDriveSession {
+  try {
+    const rawUser = localStorage.getItem(STORAGE_KEY_CONNECTED_USER);
+    const rawToken = localStorage.getItem(STORAGE_KEY_TOKEN_DATA);
+
+    let user: GoogleDriveUser | null = null;
+    if (rawUser) {
+      user = JSON.parse(rawUser);
+    }
+
+    let accessToken: string | null = null;
+    let isTokenValid = false;
+    let expiresAt: number | undefined;
+
+    if (rawToken) {
+      const tokenData = JSON.parse(rawToken);
+      if (tokenData && tokenData.accessToken) {
+        expiresAt = tokenData.expiresAt;
+        // Check if token is still valid (at least 30 seconds left)
+        if (tokenData.expiresAt && tokenData.expiresAt > Date.now() + 30000) {
+          accessToken = tokenData.accessToken;
+          isTokenValid = true;
+        }
+      }
+    }
+
+    return {
+      user,
+      accessToken,
+      isTokenValid,
+      hasStoredUser: !!user,
+      expiresAt,
+    };
+  } catch (err) {
+    return {
+      user: null,
+      accessToken: null,
+      isTokenValid: false,
+      hasStoredUser: false,
+    };
+  }
+}
+
+/**
+ * Clear stored Drive session on account disconnect
+ */
+export function clearStoredDriveSession(): void {
+  try {
+    const current = getStoredDriveSession();
+    if (current.user?.email) {
+      localStorage.setItem(STORAGE_KEY_PREV_DISCONNECTED_EMAIL, current.user.email);
+    }
+    localStorage.removeItem(STORAGE_KEY_TOKEN_DATA);
+    localStorage.removeItem(STORAGE_KEY_CONNECTED_USER);
+  } catch (err) {
+    // ignore
+  }
+  cachedAccessToken = null;
+  cachedDriveUser = null;
+}
+
+/**
+ * Track last synced Google email to automatically detect when a new email connects
+ */
+export function getLastSyncedDriveEmail(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEY_LAST_SYNCED_EMAIL);
+  } catch {
+    return null;
+  }
+}
+
+export function saveLastSyncedDriveEmail(email: string): void {
+  try {
+    localStorage.setItem(STORAGE_KEY_LAST_SYNCED_EMAIL, email.trim().toLowerCase());
+  } catch {
+    // ignore
+  }
+}
+
+export function getPrevDisconnectedEmail(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEY_PREV_DISCONNECTED_EMAIL);
+  } catch {
+    return null;
+  }
+}
 
 export function getStoredCustomOAuthClientId(): string {
   try {
@@ -49,29 +182,43 @@ export function saveStoredCustomOAuthClientId(clientId: string): void {
 }
 
 /**
- * Initialize Auth State Listener
+ * Initialize Auth State Listener with Persistent Session Restoration
  */
 export const initDriveAuth = (
   onAuthSuccess?: (user: User | GoogleDriveUser, token: string) => void,
   onAuthFailure?: () => void
 ) => {
-  if (cachedAccessToken && cachedDriveUser) {
-    if (onAuthSuccess) onAuthSuccess(cachedDriveUser as any, cachedAccessToken);
+  // 1. Immediately check persistent session from localStorage
+  const session = getStoredDriveSession();
+  if (session.user && session.accessToken && session.isTokenValid) {
+    cachedAccessToken = session.accessToken;
+    cachedDriveUser = session.user;
+    if (onAuthSuccess) {
+      onAuthSuccess(session.user as any, session.accessToken);
+    }
+  } else if (session.user) {
+    // We remember the user email, keep cached user profile so UI shows connected email
+    cachedDriveUser = session.user;
+    if (session.accessToken) {
+      cachedAccessToken = session.accessToken;
+    }
+    if (onAuthSuccess && session.accessToken) {
+      onAuthSuccess(session.user as any, session.accessToken);
+    }
   }
 
+  // 2. Also listen for Firebase auth changes
   return onAuthStateChanged(auth, async (user: User | null) => {
     if (user) {
-      if (cachedAccessToken) {
-        if (onAuthSuccess) onAuthSuccess(user, cachedAccessToken);
-      } else if (!isSigningIn) {
-        if (cachedAccessToken && onAuthSuccess) {
-          onAuthSuccess(user, cachedAccessToken);
-        } else if (onAuthFailure) {
-          onAuthFailure();
-        }
+      const currentToken = cachedAccessToken || getStoredDriveSession().accessToken;
+      if (currentToken) {
+        if (onAuthSuccess) onAuthSuccess(user, currentToken);
       }
-    } else if (!cachedAccessToken) {
-      if (onAuthFailure) onAuthFailure();
+    } else {
+      const activeSession = getStoredDriveSession();
+      if (!activeSession.isTokenValid && !cachedAccessToken) {
+        if (onAuthFailure) onAuthFailure();
+      }
     }
   });
 };
@@ -107,9 +254,14 @@ export async function fetchGoogleProfile(accessToken: string): Promise<GoogleDri
  * Request Access Token directly via Google Identity Services (GSI)
  * This avoids Firebase unauthorized-domain errors on custom domains like rawaltools.com
  */
-export function signInWithGsiTokenClient(customClientId?: string): Promise<{
+export function signInWithGsiTokenClient(
+  customClientId?: string,
+  userHint?: string
+): Promise<{
   user: GoogleDriveUser;
   accessToken: string;
+  isNewAccount: boolean;
+  previousEmail: string | null;
 }> {
   return new Promise((resolve, reject) => {
     const clientId = customClientId || getStoredCustomOAuthClientId();
@@ -123,9 +275,14 @@ export function signInWithGsiTokenClient(customClientId?: string): Promise<{
       return reject(new Error('Google Identity Services (GSI) library is loading. Please retry in a second.'));
     }
 
+    const stored = getStoredDriveSession();
+    const hint = userHint || stored.user?.email || undefined;
+
     const tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: clientId,
-      scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+      scope:
+        'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+      hint,
       callback: async (tokenResponse: any) => {
         if (tokenResponse.error) {
           reject(new Error(tokenResponse.error_description || tokenResponse.error));
@@ -138,26 +295,46 @@ export function signInWithGsiTokenClient(customClientId?: string): Promise<{
         }
 
         const token = tokenResponse.access_token;
-        cachedAccessToken = token;
+        const expiresIn = tokenResponse.expires_in ? parseInt(tokenResponse.expires_in, 10) : 3599;
 
         const profile = await fetchGoogleProfile(token);
-        cachedDriveUser = profile;
 
-        resolve({ user: profile, accessToken: token });
+        // Detect if this is a newly connected email or changed account
+        const lastSynced = getLastSyncedDriveEmail();
+        const prevDisconnected = getPrevDisconnectedEmail();
+        const isNewAccount =
+          !lastSynced ||
+          lastSynced.toLowerCase() !== profile.email.toLowerCase() ||
+          (prevDisconnected !== null && prevDisconnected.toLowerCase() !== profile.email.toLowerCase());
+
+        // Save persistently so login persists indefinitely
+        saveStoredDriveSession(profile, token, expiresIn);
+
+        resolve({
+          user: profile,
+          accessToken: token,
+          isNewAccount,
+          previousEmail: lastSynced || prevDisconnected,
+        });
       },
     });
 
-    tokenClient.requestAccessToken({ prompt: 'consent' });
+    tokenClient.requestAccessToken({ prompt: hint ? '' : 'consent' });
   });
 }
 
 /**
  * Sign In with Google and request Google Drive Scopes
- * Gracefully handles Firebase errors and falls back to Google Identity Services Token Client
+ * Gracefully handles Firebase errors, falls back to GSI, and saves persistent session
  */
-export const signInWithGoogleDrive = async (customClientId?: string): Promise<{
+export const signInWithGoogleDrive = async (
+  customClientId?: string,
+  userHint?: string
+): Promise<{
   user: GoogleDriveUser;
   accessToken: string;
+  isNewAccount: boolean;
+  previousEmail: string | null;
 } | null> => {
   isSigningIn = true;
 
@@ -165,7 +342,7 @@ export const signInWithGoogleDrive = async (customClientId?: string): Promise<{
   const google = typeof window !== 'undefined' ? (window as any).google : null;
   if (google?.accounts?.oauth2) {
     try {
-      const gsiResult = await signInWithGsiTokenClient(customClientId);
+      const gsiResult = await signInWithGsiTokenClient(customClientId, userHint);
       isSigningIn = false;
       return gsiResult;
     } catch (gsiErr: any) {
@@ -182,24 +359,37 @@ export const signInWithGoogleDrive = async (customClientId?: string): Promise<{
       throw new Error('Could not retrieve Google Drive access token from authentication.');
     }
 
-    cachedAccessToken = credential.accessToken;
-
     const driveUser: GoogleDriveUser = {
       uid: result.user.uid,
       email: result.user.email || '',
       displayName: result.user.displayName || result.user.email || 'Google User',
       photoUrl: result.user.photoURL || undefined,
     };
-    cachedDriveUser = driveUser;
 
-    return { user: driveUser, accessToken: cachedAccessToken };
+    // Detect if new account
+    const lastSynced = getLastSyncedDriveEmail();
+    const prevDisconnected = getPrevDisconnectedEmail();
+    const isNewAccount =
+      !lastSynced ||
+      lastSynced.toLowerCase() !== driveUser.email.toLowerCase() ||
+      (prevDisconnected !== null && prevDisconnected.toLowerCase() !== driveUser.email.toLowerCase());
+
+    // Save persistently
+    saveStoredDriveSession(driveUser, credential.accessToken, 3500);
+
+    return {
+      user: driveUser,
+      accessToken: credential.accessToken,
+      isNewAccount,
+      previousEmail: lastSynced || prevDisconnected,
+    };
   } catch (error: any) {
     console.warn('Firebase Sign-in Error:', error);
 
-    // If unauthorized domain, instruct or retry with GSI
+    // If unauthorized domain, retry with GSI
     if (error.code === 'auth/unauthorized-domain') {
       if (google?.accounts?.oauth2) {
-        return await signInWithGsiTokenClient(customClientId);
+        return await signInWithGsiTokenClient(customClientId, userHint);
       }
       throw new Error(
         `Domain not authorized in Firebase Auth. Added direct Google Identity Services client. Please click retry.`
@@ -213,10 +403,30 @@ export const signInWithGoogleDrive = async (customClientId?: string): Promise<{
 };
 
 /**
- * Get current cached access token
+ * Get current cached or stored access token
  */
 export const getDriveAccessToken = (): string | null => {
-  return cachedAccessToken;
+  if (cachedAccessToken) return cachedAccessToken;
+  const session = getStoredDriveSession();
+  if (session.accessToken) {
+    cachedAccessToken = session.accessToken;
+    if (session.user) cachedDriveUser = session.user;
+    return session.accessToken;
+  }
+  return null;
+};
+
+/**
+ * Get currently connected user profile (from memory or persistent storage)
+ */
+export const getConnectedDriveUser = (): GoogleDriveUser | null => {
+  if (cachedDriveUser) return cachedDriveUser;
+  const session = getStoredDriveSession();
+  if (session.user) {
+    cachedDriveUser = session.user;
+    return session.user;
+  }
+  return null;
 };
 
 /**
@@ -224,26 +434,66 @@ export const getDriveAccessToken = (): string | null => {
  */
 export const setDriveAccessToken = (token: string | null, user?: GoogleDriveUser) => {
   cachedAccessToken = token;
-  if (user) {
-    cachedDriveUser = user;
+  if (token && user) {
+    saveStoredDriveSession(user, token, 3500);
   } else if (token) {
     fetchGoogleProfile(token).then((p) => {
       cachedDriveUser = p;
+      saveStoredDriveSession(p, token, 3500);
     });
+  } else {
+    clearStoredDriveSession();
   }
 };
 
 /**
- * Sign Out and clear cached token
+ * Disconnect Google Drive account with explicit confirmation support
  */
-export const signOutGoogleDrive = async () => {
+export const disconnectGoogleDriveAccount = async (
+  options: { skipConfirm?: boolean } = {}
+): Promise<{ success: boolean; disconnectedEmail: string | null }> => {
+  const current = getConnectedDriveUser();
+  const currentEmail = current?.email || 'Connected Google Account';
+
+  if (!options.skipConfirm && typeof window !== 'undefined') {
+    const confirmed = window.confirm(
+      `کیا آپ گوگل ڈرائیو کا اکاؤنٹ (${currentEmail}) ڈسکیکٹ کرنا چاہتے ہیں؟\n\nآپ کا اسٹور ڈیٹا محفوظ رہے گا، اور جب آپ دوسرا ای میل کنیکٹ کریں گے تو تمام ڈیٹا خودکار طور پر نئے گوگل ڈرائیو میں سنک ہو جائے گا۔`
+    );
+    if (!confirmed) {
+      return { success: false, disconnectedEmail: null };
+    }
+  }
+
+  // Revoke GSI token if available
   try {
-    await signOut(auth);
-  } catch (err) {
+    const token = cachedAccessToken || getStoredDriveSession().accessToken;
+    const google = typeof window !== 'undefined' ? (window as any).google : null;
+    if (token && google?.accounts?.oauth2?.revoke) {
+      google.accounts.oauth2.revoke(token, () => {
+        console.log('Google OAuth token revoked');
+      });
+    }
+  } catch {
     // ignore
   }
-  cachedAccessToken = null;
-  cachedDriveUser = null;
+
+  try {
+    await signOut(auth);
+  } catch {
+    // ignore
+  }
+
+  const disconnectedEmail = current?.email || null;
+  clearStoredDriveSession();
+
+  return { success: true, disconnectedEmail };
+};
+
+/**
+ * Sign Out and clear cached token (backward compatibility)
+ */
+export const signOutGoogleDrive = async () => {
+  return await disconnectGoogleDriveAccount({ skipConfirm: true });
 };
 
 /**
