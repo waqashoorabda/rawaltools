@@ -47,10 +47,11 @@ import {
 import { cleanWhatsAppNumber } from '../utils/whatsapp';
 import { ThemeId, THEMES } from '../utils/theme';
 import { AdminAnalyticsView } from './AdminAnalyticsView';
+import { AdminProductPerformanceView } from './AdminProductPerformanceView';
 import { AdminPageEditorView } from './AdminPageEditorView';
 import { AdminCustomJsView } from './AdminCustomJsView';
 import { AdminAdsManagerView } from './AdminAdsManagerView';
-import { BarChart3, Layout, Code2, Megaphone, BookOpen, Star } from 'lucide-react';
+import { BarChart3, Layout, Code2, Megaphone, BookOpen, Star, TrendingUp } from 'lucide-react';
 import { AdSettings, CustomJsSettings, BlogPost, TeamMember, ProductReview } from '../types';
 import { AdminBlogManagerView } from './AdminBlogManagerView';
 import { AdminTeamManagerView } from './AdminTeamManagerView';
@@ -119,6 +120,7 @@ interface AdminModalProps {
   activeRole?: AdminRole;
   onSwitchActiveRole?: (role: AdminRole) => void;
   onOpenLoginModal?: () => void;
+  onViewProductDetails?: (product: Product) => void;
 }
 
 export const AdminModal: React.FC<AdminModalProps> = ({
@@ -159,6 +161,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   activeRole: activeRoleProp,
   onSwitchActiveRole: onSwitchActiveRoleProp,
   onOpenLoginModal,
+  onViewProductDetails,
 }) => {
   if (!isOpen) return null;
 
@@ -317,6 +320,38 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       setActiveTab('add_edit');
     }
   }, [editingProduct]);
+
+  // Start editing a specific product
+  const handleStartEditProduct = (p: Product) => {
+    setActiveTab('add_edit');
+    setName(p.name);
+    setCategory(p.category);
+    setCustomCategory('');
+    setBrand(p.brand || 'Rawal Pro');
+    setSku(p.sku || '');
+    setHasPrice(p.hasPrice);
+    setPrice(p.price ? p.price.toString() : '');
+    setDiscountPrice(p.discountPrice ? p.discountPrice.toString() : '');
+    setUnit(p.unit || 'piece');
+    setAvailableSizes(
+      p.availableSizes && p.availableSizes.length > 0
+        ? [...p.availableSizes]
+        : ['Standard']
+    );
+    setDefaultSize(p.defaultSize || 'Standard');
+    setShortDescription(p.shortDescription || '');
+    setFullDescription(p.fullDescription || p.shortDescription || '');
+    setSpecifications(
+      p.specifications && p.specifications.length > 0
+        ? [...p.specifications]
+        : [{ key: 'Quality', value: 'Heavy Duty' }]
+    );
+    setImages(p.images && p.images.length > 0 ? [...p.images] : []);
+    setInStock(p.inStock);
+    setIsFeatured(!!p.isFeatured);
+    setIsNew(!!p.isNew);
+    setSaveSuccess(false);
+  };
 
   // Reset Add Product form to blank
   const resetForm = () => {
@@ -677,7 +712,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   };
 
   const navItems: Array<{
-    id: 'analytics' | 'page_editor' | 'blog_cms' | 'manage_products' | 'reviews_manager' | 'media_library' | 'add_edit' | 'ads_manager' | 'custom_js' | 'branding_theme' | 'team_manager' | 'admin_roles' | 'store_settings' | 'security' | 'google_drive_backup';
+    id: 'analytics' | 'product_performance' | 'page_editor' | 'blog_cms' | 'manage_products' | 'reviews_manager' | 'media_library' | 'add_edit' | 'ads_manager' | 'custom_js' | 'branding_theme' | 'team_manager' | 'admin_roles' | 'store_settings' | 'security' | 'google_drive_backup';
     label: string;
     urdu: string;
     icon: React.ReactNode;
@@ -690,6 +725,15 @@ export const AdminModal: React.FC<AdminModalProps> = ({
       label: 'Visitor Analytics',
       urdu: 'وزیٹر رپورٹس',
       icon: <BarChart3 className="w-4 h-4 shrink-0" />,
+      group: 'OVERVIEW',
+      permission: 'analytics',
+    },
+    {
+      id: 'product_performance',
+      label: 'Product Performance',
+      urdu: 'پراڈکٹ پرفارمنس و تجزیہ',
+      icon: <TrendingUp className="w-4 h-4 text-emerald-400 shrink-0" />,
+      badge: 'Recharts',
       group: 'OVERVIEW',
       permission: 'analytics',
     },
@@ -1208,6 +1252,22 @@ export const AdminModal: React.FC<AdminModalProps> = ({
           {activeTab === 'analytics' && (
             <div>
               <AdminAnalyticsView products={products} settings={settings} />
+            </div>
+          )}
+
+          {/* Tab: Product Performance & Recharts Analytics */}
+          {activeTab === 'product_performance' && (
+            <div>
+              <AdminProductPerformanceView
+                products={products}
+                settings={settings}
+                onEditProduct={handleStartEditProduct}
+                onViewProductDetails={(p) => {
+                  if (onViewProductDetails) {
+                    onViewProductDetails(p);
+                  }
+                }}
+              />
             </div>
           )}
 

@@ -1349,6 +1349,10 @@ export default function App() {
         currentTheme={currentTheme}
         onSelectTheme={handleSelectTheme}
         onOpenThemeModal={() => setIsThemeModalOpen(true)}
+        onViewProductDetails={(p) => {
+          setSelectedProduct(p);
+          setIsDetailOpen(true);
+        }}
       />
 
       {/* Admin Login Modal with Protected PIN/Password */}

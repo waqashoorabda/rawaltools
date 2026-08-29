@@ -7,6 +7,7 @@ export type AdminRole = 'super_admin' | 'sub_admin_1' | 'sub_admin_2';
 
 export type AdminPermission =
   | 'analytics'
+  | 'product_performance'
   | 'page_editor'
   | 'blog_cms'
   | 'manage_products'
@@ -193,6 +194,31 @@ export interface AnalyticsSummary {
   dailyViews: { date: string; views: number; inquiries: number }[];
   deviceBreakdown: { desktop: number; mobile: number; tablet: number };
   recentEvents: AnalyticsEvent[];
+}
+
+export type ProductPerformanceStatus = 
+  | 'hot_seller' 
+  | 'high_intent' 
+  | 'high_interest' 
+  | 'moderate' 
+  | 'low_activity';
+
+export interface ProductPerformanceItem {
+  id: string;
+  name: string;
+  category: string;
+  brand?: string;
+  sku?: string;
+  price?: number | null;
+  image?: string;
+  views: number;
+  cartAdds: number;
+  conversionRate: number; // percentage, e.g. 18.5%
+  potentialRevenue: number; // cartAdds * price
+  inStock: boolean;
+  isFeatured?: boolean;
+  status: ProductPerformanceStatus;
+  lastInteractedAt?: string;
 }
 
 export interface CustomScript {

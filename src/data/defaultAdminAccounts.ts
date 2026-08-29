@@ -114,6 +114,14 @@ export const ALL_PERMISSIONS: PermissionDefinition[] = [
     icon: 'BarChart3',
   },
   {
+    id: 'product_performance',
+    label: 'Product Performance & Conversion',
+    labelUrdu: 'پراڈکٹ پرفارمنس و تجزیہ',
+    description: 'Track views and add-to-cart metrics per product with interactive Recharts bar charts and conversion insights.',
+    category: 'REPORTS & DATA',
+    icon: 'TrendingUp',
+  },
+  {
     id: 'export_import_reset',
     label: 'Catalog Backup & Reset',
     labelUrdu: 'بیک اپ، امپورٹ و ری سیٹ',
@@ -132,10 +140,12 @@ export const DEFAULT_SUB_ADMIN_1_PERMISSIONS: AdminPermission[] = [
   'blog_cms',
   'media_library',
   'analytics',
+  'product_performance',
 ];
 
 export const DEFAULT_SUB_ADMIN_2_PERMISSIONS: AdminPermission[] = [
   'analytics',
+  'product_performance',
   'page_editor',
   'reviews_manager',
   'ads_manager',
