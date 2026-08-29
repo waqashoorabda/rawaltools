@@ -274,17 +274,34 @@ export default function App() {
     }));
   };
 
-  // URL Path & Hash Router: Detects ?product=, #product-, /admin, /themes
+  // URL Path & Hash Router: Detects ?product=, #product-, /admin, /themes, /contact, etc.
   useEffect(() => {
+    // Check if redirected from 404.html (GitHub Pages or static server SPA redirection)
+    try {
+      const redirectUrl = sessionStorage.getItem('redirect');
+      if (redirectUrl) {
+        sessionStorage.removeItem('redirect');
+        const parsed = new URL(redirectUrl, window.location.origin);
+        if (parsed.pathname !== '/' || parsed.hash || parsed.search) {
+          window.history.replaceState(null, '', parsed.pathname + parsed.search + parsed.hash);
+        }
+      }
+    } catch {
+      // ignore parse error
+    }
+
     const handleLocationRoute = () => {
-      const path = window.location.pathname;
-      const hash = window.location.hash;
-      const search = window.location.search;
+      const rawPath = window.location.pathname || '';
+      const path = rawPath.toLowerCase().replace(/\/+$/, '') || '/';
+      const rawHash = window.location.hash || '';
+      const hash = rawHash.toLowerCase();
+      const rawSearch = window.location.search || '';
+      const search = rawSearch.toLowerCase();
 
       // Handle product deep links (e.g. ?product=rt-101 or #product-rt-101 or #rt-101)
       let targetId: string | null = null;
       try {
-        const urlParams = new URLSearchParams(search);
+        const urlParams = new URLSearchParams(rawSearch);
         targetId = urlParams.get('product') || urlParams.get('p') || urlParams.get('id');
       } catch {
         // ignore search parse error
@@ -328,8 +345,15 @@ export default function App() {
         setIsThemeModalOpen(true);
       }
 
-      // Handle /admin or #admin secret route
-      if (path === '/admin' || path.startsWith('/admin') || hash === '#admin' || search.includes('admin=true')) {
+      // Handle /admin, /admin/, #admin, or ?admin route
+      if (
+        path === '/admin' || 
+        path.startsWith('/admin/') || 
+        hash === '#admin' || 
+        hash.startsWith('#admin/') ||
+        search.includes('admin=true') ||
+        search.includes('page=admin')
+      ) {
         if (isAdmin) {
           setIsAdminOpen(true);
           setIsLoginOpen(false);
@@ -352,7 +376,8 @@ export default function App() {
   // Close Login handler with URL cleanup
   const handleCloseLogin = () => {
     setIsLoginOpen(false);
-    if (window.location.pathname === '/admin' || window.location.hash === '#admin') {
+    const path = window.location.pathname.toLowerCase();
+    if (path === '/admin' || path.startsWith('/admin') || window.location.hash.toLowerCase().startsWith('#admin')) {
       window.history.pushState(null, '', '/');
     }
   };
@@ -361,7 +386,8 @@ export default function App() {
   const handleCloseAdmin = () => {
     setIsAdminOpen(false);
     setEditingProduct(null);
-    if (window.location.pathname === '/admin' || window.location.hash === '#admin') {
+    const path = window.location.pathname.toLowerCase();
+    if (path === '/admin' || path.startsWith('/admin') || window.location.hash.toLowerCase().startsWith('#admin')) {
       window.history.pushState(null, '', '/');
     }
   };
@@ -371,7 +397,8 @@ export default function App() {
     setIsAdmin(false);
     setIsAdminOpen(false);
     setIsLoginOpen(false);
-    if (window.location.pathname === '/admin' || window.location.hash === '#admin') {
+    const path = window.location.pathname.toLowerCase();
+    if (path === '/admin' || path.startsWith('/admin') || window.location.hash.toLowerCase().startsWith('#admin')) {
       window.history.pushState(null, '', '/');
     }
   };
@@ -576,6 +603,9 @@ export default function App() {
   };
 
   const handleOpenAdminTrigger = () => {
+    if (window.location.pathname.toLowerCase() !== '/admin') {
+      window.history.pushState(null, '', '/admin');
+    }
     if (isAdmin) {
       setIsAdminOpen(true);
     } else {
