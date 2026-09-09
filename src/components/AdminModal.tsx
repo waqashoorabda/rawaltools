@@ -33,7 +33,8 @@ import {
   Zap,
   CheckCircle2,
   ShoppingBag,
-  Cloud
+  Cloud,
+  LogOut
 } from 'lucide-react';
 import { CATEGORIES, BRANDS } from '../data/defaultProducts';
 import { Product, Specification, StoreSettings, PageContent } from '../types';
@@ -71,6 +72,7 @@ import {
 import { registerMediaItem } from '../utils/mediaStorage';
 import { 
   purgeCacheAndSyncLatest, 
+  executeAdminLogout,
   APP_BUILD_SYNC_VERSION, 
   setStoredAdminAuthenticated,
   loadStoredAdminAccounts,
@@ -80,7 +82,12 @@ import {
   hasAdminPermission,
   loadStoredReviews
 } from '../utils/storage';
-import { Users, Crown, ShieldAlert, CheckCircle } from 'lucide-react';
+import { 
+  forcePurgeAndReloadFresh, 
+  clearAllBrowserCookies, 
+  purgeServiceWorkersAndCacheStorage 
+} from '../utils/cacheBuster';
+import { Users, Crown, ShieldAlert, CheckCircle, RefreshCw, Smartphone, Laptop, Sparkles as SparklesIcon, Trash } from 'lucide-react';
 
 interface AdminModalProps {
   isOpen: boolean;
@@ -121,6 +128,7 @@ interface AdminModalProps {
   onSwitchActiveRole?: (role: AdminRole) => void;
   onOpenLoginModal?: () => void;
   onViewProductDetails?: (product: Product) => void;
+  onLogout?: () => void;
 }
 
 export const AdminModal: React.FC<AdminModalProps> = ({
@@ -162,6 +170,7 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   onSwitchActiveRole: onSwitchActiveRoleProp,
   onOpenLoginModal,
   onViewProductDetails,
+  onLogout: onLogoutProp,
 }) => {
   if (!isOpen) return null;
 
@@ -181,6 +190,28 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [activeRoleState, setActiveRoleState] = useState<AdminRole>(() => 
     activeRoleProp || getStoredActiveAdminRole()
   );
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleAdminLogoutAction = async () => {
+    if (window.confirm('Are you sure you want to log out from Admin?\n\n✓ All your entered products, WhatsApp store details, and settings will remain 100% safely saved.\n✓ Admin session cookies and temporary browser cache will be cleared.')) {
+      setIsLoggingOut(true);
+      try {
+        await executeAdminLogout();
+        if (onLogoutProp) {
+          onLogoutProp();
+        } else {
+          setStoredAdminAuthenticated(false);
+          onClose();
+        }
+      } catch (err) {
+        console.error('Logout error:', err);
+        setStoredAdminAuthenticated(false);
+        onClose();
+      } finally {
+        setIsLoggingOut(false);
+      }
+    }
+  };
 
   useEffect(() => {
     if (initialAdminAccountsProp) setAdminAccountsState(initialAdminAccountsProp);
@@ -279,6 +310,27 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   const [showConfirmPass, setShowConfirmPass] = useState(false);
   const [passwordError, setPasswordError] = useState('');
   const [passwordSuccess, setPasswordSuccess] = useState(false);
+
+  // Cache & Cookies Purge State
+  const [cachePurging, setCachePurging] = useState(false);
+  const [cachePurgeSuccess, setCachePurgeSuccess] = useState('');
+
+  const handlePurgeAllCache = async () => {
+    setCachePurging(true);
+    setCachePurgeSuccess('');
+    try {
+      await forcePurgeAndReloadFresh('admin_security_panel');
+    } catch (err: any) {
+      setCachePurgeSuccess('Error purging cache: ' + (err.message || 'Unknown'));
+      setCachePurging(false);
+    }
+  };
+
+  const handleClearCookiesOnly = () => {
+    clearAllBrowserCookies();
+    setCachePurgeSuccess('✅ تمام براؤزر کوکیز کامیابی سے صاف کر دی گئی ہیں! (All browser cookies cleared)');
+    setTimeout(() => setCachePurgeSuccess(''), 4000);
+  };
 
   // Search in manage tab
   const [manageSearch, setManageSearch] = useState('');
@@ -1021,14 +1073,26 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               </button>
             )}
 
+            {/* Dedicated Admin Logout button that clears cookies & cache without losing entered data */}
             <button
-              id="admin-logout-btn"
-              onClick={() => {
-                setStoredAdminAuthenticated(false);
-                onClose();
-              }}
-              className="p-1.5 sm:p-2 text-slate-400 hover:text-rose-400 bg-[#1B2232] hover:bg-[#252F44] border border-[#2E3A52] rounded-lg transition-colors cursor-pointer"
-              title="Sign Out / Close Admin Panel"
+              id="admin-logout-action-btn"
+              type="button"
+              onClick={handleAdminLogoutAction}
+              disabled={isLoggingOut}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-mono font-bold bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 hover:border-rose-400 cursor-pointer transition-colors shadow-sm"
+              title="Log out from Admin: safely clears session cookies and browser cache while keeping all entered store data intact"
+            >
+              <LogOut className="w-3.5 h-3.5 text-rose-400" />
+              <span>{isLoggingOut ? 'Logging out...' : 'Admin Logout'}</span>
+            </button>
+
+            {/* Close Modal button */}
+            <button
+              id="admin-close-modal-btn"
+              type="button"
+              onClick={onClose}
+              className="p-1.5 sm:p-2 text-slate-400 hover:text-white bg-[#1B2232] hover:bg-[#252F44] border border-[#2E3A52] rounded-lg transition-colors cursor-pointer"
+              title="Close Admin Panel"
             >
               <X className="w-4 h-4" />
             </button>
@@ -1169,15 +1233,27 @@ export const AdminModal: React.FC<AdminModalProps> = ({
               })}
             </div>
 
-            {/* Desktop Sidebar Footer Status */}
-            <div className="hidden md:flex items-center justify-between p-3 bg-[#080B10] border-t border-[#1A2234] text-[10px] font-mono text-slate-400">
-              <span className="flex items-center gap-1.5 text-emerald-400">
-                <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
-                {activeRoleState === 'super_admin' ? 'Super Admin Mode' : `${currentAccount.name}`}
-              </span>
-              <span className="text-slate-500">
-                Theme: {activeThemeConfig.name.split(' ')[0]}
-              </span>
+            {/* Desktop Sidebar Footer Status & Dedicated Logout Action */}
+            <div className="hidden md:flex flex-col p-3 bg-[#080B10] border-t border-[#1A2234] gap-2.5">
+              <button
+                type="button"
+                onClick={handleAdminLogoutAction}
+                disabled={isLoggingOut}
+                className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg text-xs font-bold font-mono bg-rose-950/40 hover:bg-rose-900/60 text-rose-300 border border-rose-700/40 hover:border-rose-500 cursor-pointer transition-colors"
+                title="Logout admin, clear session cookies and cache while preserving all entered store data"
+              >
+                <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                <span>{isLoggingOut ? 'Clearing cache...' : 'Logout Admin (لاگ آؤٹ)'}</span>
+              </button>
+              <div className="flex items-center justify-between text-[10px] font-mono text-slate-400">
+                <span className="flex items-center gap-1.5 text-emerald-400">
+                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+                  {activeRoleState === 'super_admin' ? 'Super Admin Mode' : `${currentAccount.name}`}
+                </span>
+                <span className="text-slate-500">
+                  Theme: {activeThemeConfig.name.split(' ')[0]}
+                </span>
+              </div>
             </div>
 
           </aside>
@@ -2844,6 +2920,98 @@ export const AdminModal: React.FC<AdminModalProps> = ({
                 </div>
 
               </form>
+
+            </div>
+
+            {/* Auto-Cache, Cookies & Multi-Device Fresh App Delivery Manager */}
+            <div className="bg-[#141414] border border-[#262626] p-6 space-y-5">
+              
+              {/* Header */}
+              <div className="flex flex-wrap items-center justify-between gap-3 border-b border-[#222] pb-4">
+                <div className="flex items-center gap-2">
+                  <div className="w-8 h-8 rounded-none bg-[#0A0A0A] text-emerald-400 border border-[#333] flex items-center justify-center">
+                    <RefreshCw className={`w-4 h-4 ${cachePurging ? 'animate-spin' : ''}`} />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-serif-editorial italic text-white leading-none">
+                      Auto-Cache & Cookies Manager (ہر ڈیوائس پر فریش کاپی)
+                    </h4>
+                    <p className="text-[10px] text-[#777] uppercase tracking-wider mt-1 font-mono">
+                      CROSS-DEVICE FRESH APP SYNCHRONIZATION & COOKIE CONTROL
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-xs text-emerald-400 bg-emerald-950/40 border border-emerald-500/30 px-3 py-1.5 font-mono">
+                  <SparklesIcon className="w-3.5 h-3.5" />
+                  <span>Auto-Cache Bypass: Active</span>
+                </div>
+              </div>
+
+              {/* Supported Devices Badges */}
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="bg-[#0A0A0A] border border-[#222] p-3 flex items-center gap-2.5">
+                  <Smartphone className="w-4 h-4 text-sky-400 shrink-0" />
+                  <div>
+                    <div className="text-xs font-bold text-white">Android & iPhone</div>
+                    <div className="text-[10px] text-[#777]">Chrome, Safari, PWA</div>
+                  </div>
+                </div>
+                <div className="bg-[#0A0A0A] border border-[#222] p-3 flex items-center gap-2.5">
+                  <Laptop className="w-4 h-4 text-amber-400 shrink-0" />
+                  <div>
+                    <div className="text-xs font-bold text-white">Laptops & PC</div>
+                    <div className="text-[10px] text-[#777]">Chrome, Edge, Mac Safari</div>
+                  </div>
+                </div>
+                <div className="bg-[#0A0A0A] border border-[#222] p-3 flex items-center gap-2.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-400 shrink-0" />
+                  <div>
+                    <div className="text-xs font-bold text-white">Strict Anti-Cache</div>
+                    <div className="text-[10px] text-[#777]">No-Store & Version Invalidate</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Notice in Urdu & English */}
+              <div className="bg-[#0A0A0A] border border-[#333] p-4 text-xs text-[#AAA] space-y-2 font-sans">
+                <p className="font-semibold text-white flex items-center gap-1.5">
+                  <CheckCircle className="w-4 h-4 text-emerald-400" />
+                  <span>Zero Stale Cache Guarantee (تمام ڈیوائسز پر فوری اپ ڈیٹ):</span>
+                </p>
+                <p className="text-[11px] leading-relaxed text-[#888]">
+                  جب بھی آپ یا کوئی گاہک اس ویب سائٹ کو موبائل، کمپیوٹر، اینڈرائیڈ یا آئی فون پر کھولیں گے تو سرور کے اینٹی کیشے ہیڈرز اور آٹو سروس ورکر پرج کی وجہ سے ہمیشہ لیٹسٹ اور فریش کاپی اوپن ہوگی۔ پرانا کیشے یا پرانی تبدیلیاں خودبخود ختم ہو جائیں گی۔
+                </p>
+              </div>
+
+              {/* Status Message */}
+              {cachePurgeSuccess && (
+                <div className="p-3 bg-emerald-950/50 border border-emerald-500/50 text-emerald-300 text-xs font-sans">
+                  {cachePurgeSuccess}
+                </div>
+              )}
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-3 pt-1">
+                <button
+                  type="button"
+                  onClick={handlePurgeAllCache}
+                  disabled={cachePurging}
+                  className="flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-50 text-white font-bold text-xs uppercase tracking-wider py-3 px-5 transition-all shadow-md active:scale-95 cursor-pointer font-mono"
+                >
+                  <RefreshCw className={`w-4 h-4 ${cachePurging ? 'animate-spin' : ''}`} />
+                  <span>{cachePurging ? 'Purging Cache...' : 'Purge All Cache & Force Fresh Copy (کیشے صاف کریں)'}</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={handleClearCookiesOnly}
+                  className="flex items-center justify-center gap-2 bg-[#1C2536] hover:bg-[#2B3852] text-slate-200 border border-[#334155] font-bold text-xs uppercase tracking-wider py-3 px-5 transition-all active:scale-95 cursor-pointer font-mono"
+                >
+                  <Trash className="w-3.5 h-3.5 text-rose-400" />
+                  <span>Clear Browser Cookies Only (صرف کوکیز صاف کریں)</span>
+                </button>
+              </div>
 
             </div>
           </div>

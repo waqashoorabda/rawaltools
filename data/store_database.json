@@ -1,0 +1,901 @@
+{
+  "isCustomized": true,
+  "lastUpdated": "2026-09-09T05:20:56.454Z",
+  "settings": {
+    "storeName": "Rawal Tools",
+    "tagline": "Industrial Power Tools, Hardware & Engineering Machinery",
+    "whatsappNumber": "923009998877",
+    "phoneDisplay": "+92 300 1234567",
+    "email": "sales@rawaltools.com",
+    "address": "Shop # 14-18, Rawal Industrial Hardware Plaza, City Road",
+    "city": "Rawalpindi / Islamabad, Pakistan",
+    "currency": "PKR",
+    "currencySymbol": "Rs.",
+    "customGreeting": "Assalam-o-Alaikum Rawal Tools! Mujhe is product ke baare mein maloomat / order place karna hai:",
+    "adminPin": "1234",
+    "showDemoNotice": true,
+    "showArticlesOnFrontpage": false
+  },
+  "products": [
+    {
+      "id": "rt-101",
+      "name": "Heavy Duty Rotary Hammer Drill 26mm (850W)",
+      "category": "Power Tools",
+      "brand": "Rawal Pro",
+      "sku": "RT-HD-2601",
+      "hasPrice": true,
+      "price": 13500,
+      "discountPrice": 15000,
+      "unit": "piece",
+      "availableSizes": [
+        "26mm Chuck (850W)",
+        "28mm Chuck (1050W)",
+        "32mm Chuck (1500W Max)"
+      ],
+      "defaultSize": "26mm Chuck (850W)",
+      "shortDescription": "Industrial grade 3-mode SDS-plus rotary hammer with vibration control and heavy copper motor.",
+      "fullDescription": "High-impact 850W industrial hammer drill designed for concrete drilling, chiseling, and masonry works. Features reverse rotation, variable speed trigger, and safety overload clutch.",
+      "specifications": [
+        {
+          "key": "Input Power",
+          "value": "850 Watts"
+        },
+        {
+          "key": "Impact Rate",
+          "value": "0-4000 bpm"
+        },
+        {
+          "key": "No-Load Speed",
+          "value": "0-900 rpm"
+        },
+        {
+          "key": "Max Drill Dia in Concrete",
+          "value": "26 mm"
+        },
+        {
+          "key": "Chuck Type",
+          "value": "SDS-Plus"
+        },
+        {
+          "key": "Warranty",
+          "value": "6 Months Motor Warranty"
+        }
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1572981779307-38b8cabb2407?auto=format&fit=crop&w=900&q=80"
+      ],
+      "inStock": true,
+      "isFeatured": true,
+      "isNew": true,
+      "createdAt": "2026-01-10T10:00:00Z"
+    },
+    {
+      "id": "rt-102",
+      "name": "Industrial Inverter ARC / MMA Welding Machine 250A",
+      "category": "Welding & Cutting",
+      "brand": "Rawal Pro",
+      "sku": "RT-WELD-250X",
+      "hasPrice": false,
+      "price": null,
+      "unit": "set",
+      "availableSizes": [
+        "200 Amp Single Phase",
+        "250 Amp Heavy Duty",
+        "300 Amp Dual Phase IGBT"
+      ],
+      "defaultSize": "250 Amp Heavy Duty",
+      "shortDescription": "IGBT digital inverter welder with anti-stick, hot start, and dual fan copper transformer cooling.",
+      "fullDescription": "Heavy-duty 250A single/dual phase digital inverter welder capable of continuous 10-gauge & 12-gauge welding rods. Ideal for fabrication shops, site work, and heavy steel structures.",
+      "specifications": [
+        {
+          "key": "Current Range",
+          "value": "20A - 250A Digital Display"
+        },
+        {
+          "key": "Duty Cycle",
+          "value": "60% @ 250A, 100% @ 190A"
+        },
+        {
+          "key": "Input Voltage",
+          "value": "220V ± 15% 50/60Hz"
+        },
+        {
+          "key": "Electrode Size",
+          "value": "1.6mm to 4.0mm"
+        },
+        {
+          "key": "Included Accessories",
+          "value": "Earth clamp, Electrode holder, Face shield, Wire brush"
+        }
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=900&q=80",
+        "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=900&q=80"
+      ],
+      "inStock": true,
+      "isFeatured": true,
+      "createdAt": "2026-01-12T12:00:00Z"
+    },
+    {
+      "id": "rt-103",
+      "name": "Brushless Cordless Impact Wrench 20V (500 Nm Torque)",
+      "category": "Power Tools",
+      "brand": "DeWalt",
+      "sku": "DW-IW-20V500",
+      "hasPrice": true,
+      "price": 24500,
+      "unit": "kit",
+      "availableSizes": [
+        "1/2 Inch Square Drive",
+        "3/8 Inch Compact Drive",
+        "3/4 Inch High Torque"
+      ],
+      "defaultSize": "1/2 Inch Square Drive",
+      "shortDescription": "High torque 1/2-inch brushless motor with 2x 4.0Ah Li-ion batteries and fast charging dock.",
+      "fullDescription": "Professional automotive & machinery assembly impact wrench. 3-speed selector with reverse auto-stop mode to prevent bolt dropping.",
+      "specifications": [
+        {
+          "key": "Max Torque",
+          "value": "500 N.m Breakaway"
+        },
+        {
+          "key": "Battery",
+          "value": "2x 20V Max 4.0Ah Li-ion"
+        },
+        {
+          "key": "Anvil Size",
+          "value": "1/2 Inch with Detent Pin"
+        },
+        {
+          "key": "Speed",
+          "value": "0-2400 RPM / 0-3200 IPM"
+        },
+        {
+          "key": "LED Light",
+          "value": "Built-in Super Bright Work Light"
+        }
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1581244277943-fe4a9c777189?auto=format&fit=crop&w=900&q=80"
+      ],
+      "inStock": true,
+      "isFeatured": true,
+      "createdAt": "2026-01-15T09:30:00Z"
+    },
+    {
+      "id": "rt-104",
+      "name": "121-Piece Chrome Vanadium Mechanics Tool & Socket Set",
+      "category": "Hand Tools",
+      "brand": "Stanley",
+      "sku": "ST-CRV-121P",
+      "hasPrice": true,
+      "price": 18900,
+      "discountPrice": 21000,
+      "unit": "box set",
+      "availableSizes": [
+        "121-Piece Full Workshop Box",
+        "94-Piece Standard Box",
+        "150-Piece Master Edition"
+      ],
+      "defaultSize": "121-Piece Full Workshop Box",
+      "shortDescription": "Complete Cr-V steel 1/4\", 3/8\", 1/2\" ratchet sockets, combination spanners, and heavy blow mold case.",
+      "fullDescription": "Precision forged Chrome Vanadium steel with micro-matte finish for oil resistance and maximum grip. Includes 72-teeth quick release teardrop ratchets and deep socket range.",
+      "specifications": [
+        {
+          "key": "Material",
+          "value": "Heat Treated Cr-V 50BV30 Steel"
+        },
+        {
+          "key": "Ratchet Drives",
+          "value": "1/4\", 3/8\", 1/2\" (72 Teeth)"
+        },
+        {
+          "key": "Metric Range",
+          "value": "4mm to 32mm Sockets"
+        },
+        {
+          "key": "Case Type",
+          "value": "Heavy Duty Impact Resistant Carry Case"
+        }
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=900&q=80"
+      ],
+      "inStock": true,
+      "isFeatured": false,
+      "createdAt": "2026-01-18T14:00:00Z"
+    },
+    {
+      "id": "rt-105",
+      "name": "Digital Vernier Caliper 0-150mm High Precision Stainless Steel",
+      "category": "Measuring & Testing",
+      "brand": "Rawal Pro",
+      "sku": "RT-MEAS-150D",
+      "hasPrice": true,
+      "price": 3400,
+      "unit": "piece",
+      "availableSizes": [
+        "150mm (6 Inch)",
+        "200mm (8 Inch)",
+        "300mm (12 Inch)"
+      ],
+      "defaultSize": "150mm (6 Inch)",
+      "shortDescription": "Extra large LCD digital caliper with inch/metric conversion, zero-setting, and 0.01mm resolution.",
+      "fullDescription": "Hardened stainless steel construction for internal, external, depth and step measurements. Knurled thumb roller and locking screw for precision readouts.",
+      "specifications": [
+        {
+          "key": "Measuring Range",
+          "value": "0 - 150 mm / 0 - 6 inch"
+        },
+        {
+          "key": "Resolution",
+          "value": "0.01 mm / 0.0005 inch"
+        },
+        {
+          "key": "Accuracy",
+          "value": "± 0.02 mm"
+        },
+        {
+          "key": "Battery",
+          "value": "LR44 1.5V (Includes Spare)"
+        }
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=900&q=80"
+      ],
+      "inStock": true,
+      "isFeatured": false,
+      "createdAt": "2026-01-20T11:00:00Z"
+    },
+    {
+      "id": "rt-106",
+      "name": "IGBT Inverter MMA Arc Welding Machine 250A Portable Dual Voltage",
+      "category": "",
+      "brand": "Crown",
+      "sku": "RT-WELD-250PRO",
+      "hasPrice": true,
+      "price": 18500,
+      "unit": "piece",
+      "availableSizes": [
+        "250A Standard Kit",
+        "300A Heavy Duty Kit"
+      ],
+      "defaultSize": "250A Standard Kit",
+      "shortDescription": "Advanced IGBT inverter technology with digital amp display, hot start, anti-stick, and arc force.",
+      "fullDescription": "High-frequency inverter welding unit for carbon steel, stainless steel, and alloy welding. Features thermal overload protection, high duty cycle, and compact carrying handle.",
+      "specifications": [
+        {
+          "key": "Output Current Range",
+          "value": "20A - 250A"
+        },
+        {
+          "key": "Electrode Usable",
+          "value": "1.6mm - 4.0mm"
+        },
+        {
+          "key": "Duty Cycle",
+          "value": "60% @ 250A"
+        },
+        {
+          "key": "Efficiency",
+          "value": "85%"
+        }
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=900&q=80"
+      ],
+      "inStock": true,
+      "isFeatured": true,
+      "isNew": true,
+      "createdAt": "2026-02-01T09:00:00Z"
+    },
+    {
+      "id": "rt-107",
+      "name": "1/4 Inch Drive Socket & Ratchet Wrench Mechanics Tool Set 46-Piece",
+      "category": "",
+      "brand": "Total Tools",
+      "sku": "RT-HAND-46PCS",
+      "hasPrice": true,
+      "price": 4900,
+      "unit": "set",
+      "availableSizes": [
+        "46-Piece Blow Mold Case"
+      ],
+      "defaultSize": "46-Piece Blow Mold Case",
+      "shortDescription": "Chrome vanadium steel socket set with 72-tooth quick-release ratchet, extension bars, and torx/hex bits.",
+      "fullDescription": "Comprehensive automotive and machinery repair socket set forged from hardened Cr-V steel with mirror chrome finish. Includes flex extension, spinner handle, and heavy-duty storage case.",
+      "specifications": [
+        {
+          "key": "Material",
+          "value": "Chrome Vanadium Steel (Cr-V)"
+        },
+        {
+          "key": "Ratchet Mechanism",
+          "value": "72-Tooth Quick Release"
+        },
+        {
+          "key": "Case Type",
+          "value": "High-Density Impact Blow Molded"
+        }
+      ],
+      "images": [
+        "https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=900&q=80"
+      ],
+      "inStock": true,
+      "isFeatured": false,
+      "isNew": true,
+      "createdAt": "2026-02-05T12:00:00Z"
+    }
+  ],
+  "pageContent": {
+    "announcementText": "⚡ Rawal Tools Showroom • Same-Day Cargo Dispatch to Rawalpindi, Islamabad, Lahore, Karachi & Peshawar",
+    "heroBadge": "INDUSTRIAL TOOLS SHOWROOM 2026",
+    "heroHeadline1": "ENGINEERING GRADE",
+    "heroHeadline2": "INDUSTRIAL POWER TOOLS",
+    "heroSubheadline": "Pakistan’s premier showroom for high-torque rotary hammers, angle grinders, inverter welding plants & heavy-duty workshop machinery.",
+    "categoryHeading": "Browse by Tool Category & Sizes",
+    "categorySubheading": "Explore high-performance power tools, welding plants, precision measuring devices & workshop machinery with selectable sizes.",
+    "banner1Tag": "Power Collection",
+    "banner1Title": "Rotary & Hammer Drills",
+    "banner1Subtext": "High torque 850W-1500W copper motors with vibration damping",
+    "banner2Tag": "Limited Stock",
+    "banner2Title": "THE BIG CLEARANCE",
+    "banner2Subtext": "UPTO 40% OFF WHOLESALE LOTS",
+    "banner3Tag": "Heavy Workshop",
+    "banner3Title": "Inverter Arc Welders",
+    "banner3Subtext": "IGBT Digital Inverters, Brass Torches & Industrial Sockets",
+    "vipTag": "VIP Corner",
+    "vipTitle": "Additional 10% Discount on Bulk Orders",
+    "vipSubtext": "Direct factory pricing for verified contractors & workshop mechanics",
+    "cargoTag": "Direct Cargo Dispatch",
+    "cargoTitle": "Nationwide Delivery Across Pakistan",
+    "cargoSubtext": "Rawalpindi, Islamabad, Lahore, Karachi, Peshawar & Faisalabad",
+    "catalogHeading": "Complete Workshop Catalog",
+    "catalogSubheading": "Select an industrial tool to view full specifications, photos, and instant WhatsApp quotation.",
+    "footerAboutText": "Pakistan's premier industrial showcase for precision rotary tools, industrial angle grinders, heavy duty sockets, welding inverters, and high-tolerance workshop equipment. Direct quotation and express cargo dispatch.",
+    "sectionOrder": [
+      "hero",
+      "categories",
+      "promo_banners",
+      "catalog"
+    ],
+    "hiddenSections": []
+  },
+  "adSettings": {
+    "globalAdsEnabled": true,
+    "adsensePublisherId": "ca-pub-9876543210987654",
+    "enableAutoAds": false,
+    "slots": {
+      "top_leaderboard": {
+        "id": "top_leaderboard",
+        "name": "Top Header Leaderboard",
+        "locationLabel": "Above Hero / Below Navbar",
+        "dimensions": "728x90 / Responsive Billboard",
+        "isEnabled": true,
+        "adType": "custom_image_banner",
+        "adsenseClient": "ca-pub-9876543210987654",
+        "adsenseSlot": "1122334455",
+        "adsenseCustomCode": "<ins class=\"adsbygoogle\"\n     style=\"display:block\"\n     data-ad-client=\"ca-pub-9876543210987654\"\n     data-ad-slot=\"1122334455\"\n     data-ad-format=\"auto\"\n     data-full-width-responsive=\"true\"></ins>",
+        "imageUrl": "https://images.unsplash.com/photo-1504148455328-c376907d081c?auto=format&fit=crop&w=1200&q=80",
+        "targetUrl": "https://wa.me/923001234567?text=Hi%20Rawal%20Tools,%20I%20saw%20your%20Top%20Banner%20Special%20Offer",
+        "altText": "Mega Power Tools Sale - Flat 25% Off",
+        "badge": "SPONSORED PROMO",
+        "title": "SPECIAL CONTRACTOR MEGA SALE — FLAT 25% OFF COPPER ARMATURE POWER TOOLS",
+        "subtitle": "Official Rawal Tools Direct Factory Clearance • Nationwide COD Delivery Across Pakistan",
+        "openInNewTab": true
+      },
+      "mid_content": {
+        "id": "mid_content",
+        "name": "Mid-Page Content Billboard",
+        "locationLabel": "Between Categories & Clearance Banners",
+        "dimensions": "970x250 / 728x90",
+        "isEnabled": true,
+        "adType": "custom_image_banner",
+        "adsenseClient": "ca-pub-9876543210987654",
+        "adsenseSlot": "5566778899",
+        "adsenseCustomCode": "<ins class=\"adsbygoogle\"\n     style=\"display:block\"\n     data-ad-client=\"ca-pub-9876543210987654\"\n     data-ad-slot=\"5566778899\"\n     data-ad-format=\"horizontal\"\n     data-full-width-responsive=\"true\"></ins>",
+        "imageUrl": "https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=1200&q=80",
+        "targetUrl": "https://wa.me/923001234567?text=Hi%20Rawal%20Tools,%20inquiry%20about%20Inverter%20Welding%20Machines",
+        "altText": "IGBT Digital Inverter Welding Specials",
+        "badge": "ADVERTISEMENT",
+        "title": "INDUSTRIAL IGBT INVERTER WELDING PLANTS & AUTO-DARKENING TRUE-COLOR MASKS",
+        "subtitle": "200A - 300A High Duty Cycle Inverters with 1 Year Parts Support. Book Orders on WhatsApp.",
+        "openInNewTab": true
+      },
+      "in_feed_grid": {
+        "id": "in_feed_grid",
+        "name": "Catalog In-Feed Showcase Banner",
+        "locationLabel": "Above Product Catalog Grid",
+        "dimensions": "Responsive In-Feed / 336x280",
+        "isEnabled": true,
+        "adType": "custom_image_banner",
+        "adsenseClient": "ca-pub-9876543210987654",
+        "adsenseSlot": "9988776655",
+        "adsenseCustomCode": "<ins class=\"adsbygoogle\"\n     style=\"display:block\"\n     data-ad-format=\"fluid\"\n     data-ad-layout-key=\"-fb+5w+4e-db+86\"\n     data-ad-client=\"ca-pub-9876543210987654\"\n     data-ad-slot=\"9988776655\"></ins>",
+        "imageUrl": "https://images.unsplash.com/photo-1572981779307-38b8cabb2407?auto=format&fit=crop&w=1000&q=80",
+        "targetUrl": "https://wa.me/923001234567?text=Hi%20Rawal%20Tools,%20I%20need%20Bulk%20Fasteners%20and%20Drill%20Bits",
+        "altText": "M35 Cobalt Drill Bit Sets & Hardened Sockets",
+        "badge": "FEATURED SPONSOR",
+        "title": "GENUINE M35 5% COBALT HIGH-SPEED DRILL BITS & HARDENED CHROME VANADIUM SETS",
+        "subtitle": "Guaranteed drilling through Stainless Steel & Cast Iron without burning tips.",
+        "openInNewTab": true
+      },
+      "bottom_footer": {
+        "id": "bottom_footer",
+        "name": "Footer Leaderboard Banner",
+        "locationLabel": "Directly Above Footer",
+        "dimensions": "728x90 / Responsive Wide",
+        "isEnabled": true,
+        "adType": "custom_image_banner",
+        "adsenseClient": "ca-pub-9876543210987654",
+        "adsenseSlot": "3344556677",
+        "adsenseCustomCode": "<ins class=\"adsbygoogle\"\n     style=\"display:block\"\n     data-ad-client=\"ca-pub-9876543210987654\"\n     data-ad-slot=\"3344556677\"\n     data-ad-format=\"auto\"\n     data-full-width-responsive=\"true\"></ins>",
+        "imageUrl": "https://images.unsplash.com/photo-1586864387967-d02ef85d93e8?auto=format&fit=crop&w=1200&q=80",
+        "targetUrl": "https://wa.me/923001234567?text=Hi%20Rawal%20Tools,%20I%20want%20to%20become%20a%20wholesale%20reseller",
+        "altText": "Become a Rawal Tools Authorized Reseller",
+        "badge": "WHOLESALE B2B AD",
+        "title": "JOIN PAKISTAN’S LARGEST INDUSTRIAL TOOLS WHOLESALE & DISTRIBUTION NETWORK",
+        "subtitle": "Competitive dealer margins, bulk cartons & direct depot delivery in Lahore, Karachi & Rawalpindi.",
+        "openInNewTab": true
+      }
+    }
+  },
+  "customJsSettings": {
+    "enabled": true,
+    "globalHeaderJs": "// Global Header JavaScript (Executed in <head> context)\n// Example: Custom event logging or analytics initialization\nconsole.log('⚡ Rawal Tools Custom JavaScript Engine Loaded');",
+    "globalFooterJs": "// Global Footer JavaScript (Executed before </body>)\n// You can add custom UI tweaks, dynamic chat triggers, or event handlers here.",
+    "customScripts": [
+      {
+        "id": "script-adsense-init",
+        "name": "Google AdSense Script Tag",
+        "code": "// Google AdSense Global Script\n(function() {\n  var s = document.createElement('script');\n  s.src = 'https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9876543210987654';\n  s.async = true;\n  s.crossOrigin = 'anonymous';\n  document.head.appendChild(s);\n})();",
+        "placement": "head",
+        "isEnabled": true,
+        "notes": "Loads Google AdSense script library asynchronously.",
+        "createdAt": "2026-09-09T05:20:46.964Z"
+      },
+      {
+        "id": "script-welcome-analytics",
+        "name": "Console Store Welcome & Telemetry",
+        "code": "// Custom store telemetry snippet\ntry {\n  window.__rawalToolsReady = true;\n  console.info('%c RAWAL TOOLS INDUSTRIAL SHOWROOM %c v2.4 Active ', 'background:#F59E0B; color:#000; font-weight:bold; padding:2px 4px;', 'background:#1E293B; color:#FFF; padding:2px 4px;');\n} catch(e) {\n  console.error('Custom JS Error:', e);\n}",
+        "placement": "body_end",
+        "isEnabled": true,
+        "notes": "Initializes window status and store console branding.",
+        "createdAt": "2026-09-09T05:20:46.964Z"
+      }
+    ]
+  },
+  "blogPosts": [
+    {
+      "id": "post-1",
+      "title": "Complete Guide: Choosing the Best IGBT Inverter Welder for Fabrication Workshops",
+      "slug": "choosing-best-igbt-inverter-welder",
+      "excerpt": "Understand duty cycle ratings, input voltage tolerances for local Pakistani power grids, and ARC vs TIG vs MIG performance before investing.",
+      "author": "Engr. Tariq Mehmood (Technical Specialist)",
+      "category": "Welding & Fabrication",
+      "tags": [
+        "Welding",
+        "IGBT Inverter",
+        "Workshop Setup",
+        "Industrial Tools"
+      ],
+      "coverImage": "https://images.unsplash.com/photo-1504307651254-35680f356dfd?auto=format&fit=crop&w=1200&q=80",
+      "publishedAt": "2026-08-10",
+      "isPublished": true,
+      "readTimeMinutes": 5,
+      "featuredProductId": "raw-001",
+      "viewsCount": 428,
+      "content": "### Introduction to Modern IGBT Inverter Technology\n\nInvesting in an industrial welding plant requires balancing power output, electrical reliability, and thermal management. In Pakistan's industrial hubs (Rawalpindi, Gujranwala, Lahore, Karachi), power fluctuations and high ambient workshop temperatures can damage substandard welding machines.\n\n### 1. Understanding the Duty Cycle\n\nThe **Duty Cycle** is the percentage of a 10-minute cycle during which a welding plant can run continuously at maximum amperage without tripping its thermal cut-off.\n* **Light Duty (20-30%):** Suitable for domestic DIY jobs and occasional light grille fabrication.\n* **Medium Commercial (60%):** Ideal for general metal fabrication shops running 2.6mm to 3.2mm welding rods continuously.\n* **Heavy Industrial (80-100%):** Essential for pressure vessels, heavy structural ironwork, and continuous 4.0mm rod welding.\n\n### 2. High Frequency VRD Safety\nModern welders equipped with **Voltage Reduction Device (VRD)** keep open-circuit voltage below 15V when idle, protecting the welder from electrical shocks in humid conditions.\n\n### Recommended Tool Specifications:\n* **Current Range:** 20A - 250A True Output\n* **Electrode Support:** 1.6mm to 4.0mm (E6013, E7018)\n* **Protection Class:** IP21S with twin high-speed copper core cooling fans.\n\n---\n*For direct wholesale inquiries and factory quotes, contact Rawal Tools on official WhatsApp.*"
+    },
+    {
+      "id": "post-2",
+      "title": "Rotary Hammer Drills vs Standard Impact Drills: Which One Do You Need?",
+      "slug": "rotary-hammer-vs-impact-drill-guide",
+      "excerpt": "Compare SDS-Plus pneumatic piston mechanisms against mechanical clutch impact drills for concrete, stone, and anchor installation.",
+      "author": "Rawal Tools Engineering Desk",
+      "category": "Power Tools",
+      "tags": [
+        "Drilling",
+        "SDS Plus",
+        "Concrete",
+        "Machinery"
+      ],
+      "coverImage": "https://images.unsplash.com/photo-1572981779307-38b8cabb2407?auto=format&fit=crop&w=1200&q=80",
+      "publishedAt": "2026-08-12",
+      "isPublished": true,
+      "readTimeMinutes": 4,
+      "featuredProductId": "raw-002",
+      "viewsCount": 312,
+      "content": "### Mechanical Differences: Impact vs Pneumatic Piston\n\nMany contractors confuse standard **Impact Drills** with heavy-duty **SDS-Plus Rotary Hammers**. While both vibrate to drill masonry, their internal engineering is completely different.\n\n### Standard Impact Drills (Ratchet Clutch)\nAn impact drill creates percussive action by sliding two ribbed steel discs over each other. \n* **Pros:** Compact, affordable, good for soft brick and light plaster.\n* **Cons:** High user fatigue; requires physical force; wears down rapidly in reinforced concrete.\n\n### Rotary Hammers (Pneumatic Air Cushion)\nA rotary hammer uses a motorized crankshaft piston compressing air in a cylinder, driving the striker directly into the SDS chuck with massive kinetic impact energy (Joules).\n* **Impact Energy:** 2.5 Joules to 5.0 Joules per stroke.\n* **Modes:** Drilling, Hammer Drilling, and Pure Chiseling / Demolition.\n\n### Buying Verdict:\nIf your work involves drilling into cured concrete beams, lintels, or stone walls for expanding bolts, an SDS-Plus Rotary Hammer with anti-vibration grip is non-negotiable."
+    },
+    {
+      "id": "post-3",
+      "title": "Maintenance Checklist: Extending Angle Grinder Armature & Carbon Brush Lifespan",
+      "slug": "angle-grinder-maintenance-guide",
+      "excerpt": "Prevent armature burnout, carbon brush arcing, and bearing seizure with these 5 daily workshop maintenance practices.",
+      "author": "Master Craftsman Usman Ali",
+      "category": "Maintenance & Repairs",
+      "tags": [
+        "Angle Grinder",
+        "Carbon Brush",
+        "Armature",
+        "Preventative Care"
+      ],
+      "coverImage": "https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=1200&q=80",
+      "publishedAt": "2026-08-14",
+      "isPublished": true,
+      "readTimeMinutes": 4,
+      "featuredProductId": "raw-003",
+      "viewsCount": 560,
+      "content": "### Why Do Angle Grinders Burn Out in Heavy Fabrication?\n\nAngle grinders operate at high rotational velocities (9,000 to 12,000 RPM). In metal cutting and grinding, microscopic abrasive conductive iron filings are sucked into the motor housing by the cooling fan, causing short circuits.\n\n### 5-Step Maintenance Protocol:\n1. **Daily Air-Blow Cleaning:** After every 4 hours of heavy grinding, blow pressurized dry air through the rear ventilation louvers.\n2. **Inspect Carbon Brushes Monthly:** Replace carbon brushes once they wear down to 5mm length. Worn brushes cause heavy sparking (arcing) which damages the commutator bars.\n3. **Check Bevel Gear Lubrication:** Every 6 months, open the aluminum gear head and repack high-temperature molybdenum grease.\n4. **Never Force the Disc:** Let the tool's RPM do the cutting. Excessive physical downward force causes motor overloading and field coil burnouts.\n5. **Always Use the Correct Flange & Guard:** Never operate a grinder without its safety wheel guard."
+    },
+    {
+      "id": "post-4",
+      "title": "HSS vs Cobalt M35 vs Carbide Drill Bits: Precision Cutting Through Hardened Steel",
+      "slug": "hss-vs-cobalt-drill-bits-comparison",
+      "excerpt": "Discover why 5% Cobalt alloy bits outperform standard High-Speed Steel when drilling stainless steel and alloy plates.",
+      "author": "Rawal Tools Metallurgy Team",
+      "category": "Accessories & Tooling",
+      "tags": [
+        "Drill Bits",
+        "Cobalt M35",
+        "Stainless Steel",
+        "Cutting Tools"
+      ],
+      "coverImage": "https://images.unsplash.com/photo-1508873696983-2df5293cb32f?auto=format&fit=crop&w=1200&q=80",
+      "publishedAt": "2026-08-15",
+      "isPublished": true,
+      "readTimeMinutes": 3,
+      "featuredProductId": "raw-004",
+      "viewsCount": 289,
+      "content": "### Material Selection for Metalworking\n\nWhen drilling structural steel, sheet metal, and stainless steel (Grade 304/316), using the wrong drill bit leads to dull cutting edges and overheated workpieces.\n\n### Material Breakdown:\n* **HSS (High-Speed Steel 4241/4341):** Excellent for mild steel, wood, aluminum, and plastics. Cost-effective for general workshop use.\n* **Cobalt M35 (5% Cobalt Alloy):** Heat-resistant up to 500°C. Maintains sharp cutting edges when cutting tough stainless steel without losing temper.\n* **Solid Tungsten Carbide:** Ultimate hardness for CNC milling and industrial production lines, but brittle if misaligned.\n\n### Pro Tip for Long Bit Life:\nAlways apply water-soluble cutting fluid or coolant oil and reduce drill RPM as hole diameter increases."
+    },
+    {
+      "id": "post-5",
+      "title": "Workshop Safety Protocols: Essential Protective Equipment for Metal Fabrication",
+      "slug": "workshop-safety-protocols-metalworking",
+      "excerpt": "Comprehensive guidelines on auto-darkening welding helmets, cut-resistant gloves, and eye protection standards.",
+      "author": "Safety Officer Kamran Sheikh",
+      "category": "Safety & Protocols",
+      "tags": [
+        "Safety",
+        "PPE",
+        "Welding Helmet",
+        "Workshop Standards"
+      ],
+      "coverImage": "https://images.unsplash.com/photo-1504917599217-d4dc5ebe6122?auto=format&fit=crop&w=1200&q=80",
+      "publishedAt": "2026-08-16",
+      "isPublished": true,
+      "readTimeMinutes": 4,
+      "featuredProductId": "raw-005",
+      "viewsCount": 198,
+      "content": "### Zero-Compromise Safety in the Workshop\n\nEvery professional metalworking shop must prioritize personal protective equipment (PPE). Preventing arc flash, flying sparks, and acoustic damage is vital for long-term health.\n\n### Key Equipment Standards:\n1. **Auto-Darkening Solar Welding Helmets:** True Color optical lenses with DIN 9-13 shade adjustment respond in 1/25,000th of a second.\n2. **Impact-Resistant Polycarbonate Safety Goggles:** Prevents metal grinding swarf and wheel fragments from reaching eyes.\n3. **Split Leather Welding Gauntlets:** Heat-resistant Kevlar stitched gloves shield hands from molten spatter and sharp burrs.\n4. **Ear Defenders (NRR 25dB+):** Vital when operating cut-off saws, high-speed grinders, and rotary demolition hammers."
+    }
+  ],
+  "teamMembers": [
+    {
+      "id": "team-1",
+      "name": "Haji Waqas Ahmed",
+      "nameUrdu": "حاجی وقاص احمد",
+      "role": "Chief Executive Officer (CEO & Founder)",
+      "roleUrdu": "چیف ایگزیکٹو آفیسر و بانی",
+      "department": "Management",
+      "photoUrl": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80",
+      "whatsappNumber": "923001234567",
+      "phone": "+92 300 1234567",
+      "email": "ceo@rawaltools.com",
+      "areasCovered": [
+        "Headquarters (Rawalpindi/Islamabad)",
+        "Nationwide Corporate Supply",
+        "All Pakistan Cargo"
+      ],
+      "bio": "Over 20 years of experience in industrial machinery importation, European precision rotary tooling, and heavy industrial contracts across Pakistan.",
+      "languages": [
+        "Urdu",
+        "Punjabi",
+        "English"
+      ],
+      "experienceYears": 22,
+      "isAvailable": true,
+      "order": 1,
+      "badge": "Founder & CEO"
+    },
+    {
+      "id": "team-2",
+      "name": "Muhammad Bilal Khan",
+      "nameUrdu": "محمد بلال خان",
+      "role": "General Sales & Machinery Consultant",
+      "roleUrdu": "جنرل سیلز و مشینری کنسلٹنٹ",
+      "department": "Sales",
+      "photoUrl": "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=600&q=80",
+      "whatsappNumber": "923215554321",
+      "phone": "+92 321 5554321",
+      "email": "sales@rawaltools.com",
+      "areasCovered": [
+        "Lahore Industrial Estate",
+        "Gujranwala",
+        "Faisalabad Industrial Belt",
+        "Sialkot"
+      ],
+      "bio": "Specialist in heavy-duty angle grinders, CNC precision chucks, socket sets, and industrial quotation estimation for major manufacturing plants.",
+      "languages": [
+        "Urdu",
+        "Punjabi",
+        "English"
+      ],
+      "experienceYears": 12,
+      "isAvailable": true,
+      "order": 2,
+      "badge": "Senior Sales Head"
+    },
+    {
+      "id": "team-3",
+      "name": "Tariq Mehmood",
+      "nameUrdu": "طارق محمود",
+      "role": "Senior Dispatch & Logistics Fleet Driver",
+      "roleUrdu": "ڈسپیچ و لاجسٹک فلیٹ ڈرائیور",
+      "department": "Logistics & Dispatch",
+      "photoUrl": "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=600&q=80",
+      "whatsappNumber": "923334448899",
+      "phone": "+92 333 4448899",
+      "email": "dispatch@rawaltools.com",
+      "areasCovered": [
+        "Rawalpindi / Islamabad Express Delivery",
+        "G.T. Road Cargo Hubs",
+        "Peshawar & KPK Corridor"
+      ],
+      "bio": "Responsible for same-day express door-to-door delivery, safe handling of high-precision heavy machinery, and coordinating inter-city cargo terminals.",
+      "languages": [
+        "Urdu",
+        "Pashto",
+        "Punjabi"
+      ],
+      "experienceYears": 14,
+      "isAvailable": true,
+      "order": 3,
+      "badge": "Express Fleet Lead"
+    },
+    {
+      "id": "team-4",
+      "name": "Hamza Rafique",
+      "nameUrdu": "حمزہ رفیق",
+      "role": "Area Sales Executive & Field Representative",
+      "roleUrdu": "علاقائی سیلز ایگزیکٹو و نمائندہ",
+      "department": "Sales",
+      "photoUrl": "https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=600&q=80",
+      "whatsappNumber": "923456677889",
+      "phone": "+92 345 6677889",
+      "email": "hamza.sales@rawaltools.com",
+      "areasCovered": [
+        "Karachi Industrial Hub (SITE/Korangi)",
+        "Hub Balochistan",
+        "Hyderabad & Interior Sindh"
+      ],
+      "bio": "Direct on-site tooling demos, bulk contractor bulk discounts, and rapid stock replacement for Southern Pakistan industrial sectors.",
+      "languages": [
+        "Urdu",
+        "Sindhi",
+        "English"
+      ],
+      "experienceYears": 7,
+      "isAvailable": true,
+      "order": 4,
+      "badge": "Field Sales"
+    },
+    {
+      "id": "team-5",
+      "name": "Ustad Asif Ali",
+      "nameUrdu": "استاد آصف علی",
+      "role": "Senior Workshop Engineer & Inverter Specialist",
+      "roleUrdu": "سینئر ورکشاپ انجینئر و انورٹر اسپیشلسٹ",
+      "department": "Technical Support",
+      "photoUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80",
+      "whatsappNumber": "923129988776",
+      "phone": "+92 312 9988776",
+      "email": "tech@rawaltools.com",
+      "areasCovered": [
+        "All Pakistan Technical Support",
+        "Warranty Calibration Center",
+        "On-Site Machine Commissioning"
+      ],
+      "bio": "Certified technician for IGBT welding inverters, magnetic drill motors, armature diagnostics, and warranty technical assistance.",
+      "languages": [
+        "Urdu",
+        "Punjabi"
+      ],
+      "experienceYears": 18,
+      "isAvailable": true,
+      "order": 5,
+      "badge": "Chief Technical Master"
+    }
+  ],
+  "reviews": [
+    {
+      "id": "rev-101",
+      "productId": "rt-101",
+      "customerName": "Muhammad Rizwan",
+      "customerCity": "Lahore (Daroghawala)",
+      "rating": 5,
+      "title": "Zabardast power for concrete drilling",
+      "comment": "We used this rotary hammer for building site anchoring and concrete slab drilling. Heavy copper winding hai aur bilkul heat up nahi hota. Highly recommended for contractors!",
+      "isVerifiedPurchase": true,
+      "status": "approved",
+      "createdAt": "2026-08-14T10:30:00Z",
+      "adminReply": "Shukriya Rizwan bhai! Hum hamesha 100% original copper winding tools provide karte hain.",
+      "adminRepliedAt": "2026-08-14T12:00:00Z",
+      "helpfulCount": 14
+    },
+    {
+      "id": "rev-102",
+      "productId": "rt-101",
+      "customerName": "Tariq Mehmood & Sons",
+      "customerCity": "Rawalpindi",
+      "rating": 5,
+      "title": "Solid build quality with quick dispatch",
+      "comment": "Ordered through WhatsApp and received on the same day via local rider in Rawalpindi. Hammering action is very smooth and low vibration.",
+      "isVerifiedPurchase": true,
+      "status": "approved",
+      "createdAt": "2026-08-18T15:45:00Z",
+      "helpfulCount": 9
+    },
+    {
+      "id": "rev-103",
+      "productId": "rt-102",
+      "customerName": "Haji Aslam Fabrication",
+      "customerCity": "Gujranwala",
+      "rating": 5,
+      "title": "Best 4-inch grinder in this budget",
+      "comment": "Grinding metal gates and heavy box pipes is very easy with 900W motor. Armature quality is top-notch. Will order 3 more for our workshop.",
+      "isVerifiedPurchase": true,
+      "status": "approved",
+      "createdAt": "2026-08-20T09:15:00Z",
+      "adminReply": "JazakAllah Aslam bhai. Bulk orders ke liye hamesha special wholesale rate available hai.",
+      "adminRepliedAt": "2026-08-20T10:30:00Z",
+      "helpfulCount": 22
+    },
+    {
+      "id": "rev-104",
+      "productId": "rt-102",
+      "customerName": "Kashif Ali Steel Works",
+      "customerCity": "Faisalabad",
+      "rating": 4,
+      "title": "Smooth motor and ergonomic grip",
+      "comment": "Speed lock switch is durable and body balance is comfortable for 6-8 hours daily grinding work.",
+      "isVerifiedPurchase": true,
+      "status": "approved",
+      "createdAt": "2026-08-22T14:10:00Z",
+      "helpfulCount": 7
+    },
+    {
+      "id": "rev-105",
+      "productId": "rt-103",
+      "customerName": "Engr. Farhan Shah",
+      "customerCity": "Islamabad (I-9 Industrial)",
+      "rating": 5,
+      "title": "IGBT Inverter machine welding performance is flawless",
+      "comment": "Runs 6013 and 7018 welding rods continuously without tripping the breaker. ARC ignition is instant and smooth bead finish.",
+      "isVerifiedPurchase": true,
+      "status": "approved",
+      "createdAt": "2026-08-10T11:20:00Z",
+      "adminReply": "Thanks Engineer Farhan! Designed specifically for reliable industrial duty cycle.",
+      "adminRepliedAt": "2026-08-10T14:00:00Z",
+      "helpfulCount": 31
+    },
+    {
+      "id": "rev-106",
+      "productId": "rt-104",
+      "customerName": "Abdul Rehman Woodcraft",
+      "customerCity": "Peshawar",
+      "rating": 5,
+      "title": "Ultra sharp carbide teeth with zero chipping",
+      "comment": "Used on solid Sheesham and Walnut hardwood. Cut line is glass smooth. Best blade we have tested this season.",
+      "isVerifiedPurchase": true,
+      "status": "approved",
+      "createdAt": "2026-08-24T16:00:00Z",
+      "helpfulCount": 18
+    },
+    {
+      "id": "rev-107",
+      "productId": "rt-105",
+      "customerName": "Malik Zeeshan",
+      "customerCity": "Multan",
+      "rating": 5,
+      "title": "Accurate laser distance meter with fast measurement",
+      "comment": "Area, volume, and Pythagorean calculation modes work accurately. Screen visibility in daylight is crisp.",
+      "isVerifiedPurchase": true,
+      "status": "approved",
+      "createdAt": "2026-08-25T13:40:00Z",
+      "helpfulCount": 11
+    },
+    {
+      "id": "rev-108",
+      "productId": "rt-106",
+      "customerName": "Chaudhry Bilal Autos",
+      "customerCity": "Karachi (Plaza Market)",
+      "rating": 5,
+      "title": "Chrome Vanadium sockets with heavy ratchet mechanism",
+      "comment": "Very solid 108 pieces tool kit for automobile repair. Sockets fit snugly without rounding bolt heads.",
+      "isVerifiedPurchase": true,
+      "status": "approved",
+      "createdAt": "2026-08-26T08:50:00Z",
+      "adminReply": "Thank you Bilal bhai! Sockets are lifetime drop-forged CR-V alloy steel.",
+      "adminRepliedAt": "2026-08-26T10:00:00Z",
+      "helpfulCount": 25
+    }
+  ],
+  "adminAccounts": {
+    "superAdmin": {
+      "id": "super_admin",
+      "role": "super_admin",
+      "name": "Super Admin (Master)",
+      "nameUrdu": "سپر ایڈمن (مکمل اختیارات)",
+      "pin": "1234",
+      "isActive": true,
+      "avatarIcon": "Crown",
+      "permissions": [
+        "manage_products",
+        "add_edit_products",
+        "media_library",
+        "blog_cms",
+        "store_settings",
+        "team_manager",
+        "reviews_manager",
+        "ads_manager",
+        "page_editor",
+        "branding_theme",
+        "custom_js",
+        "analytics",
+        "product_performance",
+        "export_import_reset",
+        "manage_admins"
+      ],
+      "email": "admin@rawaltools.com",
+      "phone": "+92 300 1234567",
+      "notes": "Primary Store Owner & Master Controller with absolute administrative authority."
+    },
+    "subAdmin1": {
+      "id": "sub_admin_1",
+      "role": "sub_admin_1",
+      "name": "Sub Admin 1 (Catalog & Content)",
+      "nameUrdu": "سب ایڈمن 1 (کیٹلاگ و مواد)",
+      "pin": "2222",
+      "isActive": true,
+      "avatarIcon": "Package",
+      "permissions": [
+        "manage_products",
+        "add_edit_products",
+        "reviews_manager",
+        "blog_cms",
+        "media_library",
+        "analytics",
+        "product_performance"
+      ],
+      "email": "catalog@rawaltools.com",
+      "phone": "+92 321 9876543",
+      "notes": "Handles tool listings, technical specs, media files, articles, and AI categorization."
+    },
+    "subAdmin2": {
+      "id": "sub_admin_2",
+      "role": "sub_admin_2",
+      "name": "Sub Admin 2 (Store & Marketing)",
+      "nameUrdu": "سب ایڈمن 2 (اسٹور و مارکیٹنگ)",
+      "pin": "3333",
+      "isActive": true,
+      "avatarIcon": "Megaphone",
+      "permissions": [
+        "analytics",
+        "product_performance",
+        "page_editor",
+        "reviews_manager",
+        "ads_manager",
+        "team_manager",
+        "store_settings",
+        "branding_theme"
+      ],
+      "email": "marketing@rawaltools.com",
+      "phone": "+92 333 5554433",
+      "notes": "Oversees marketing banners, ads, team representatives, customer contacts, and analytics."
+    }
+  }
+}

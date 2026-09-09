@@ -23,6 +23,7 @@ import {
   ProductReview,
   ReviewStats
 } from '../types';
+import { pushStoreSectionToServer, logoutAdminOnServer, fetchServerStoreData } from './storeApi';
 
 export const APP_BUILD_SYNC_VERSION = '2026.08.27.v5_sync';
 const VERSION_KEY = 'rawal_tools_build_version_v1';
@@ -58,44 +59,90 @@ export function checkAndPerformAutoBuildSync(): boolean {
 }
 
 /**
- * Purges all stale localStorage, resets cache, loads fresh defaults from codebase and reloads
+ * Safely purges temporary browser cache, cookies, and service workers,
+ * while GUARANTEEING that user-entered WhatsApp details, products, and settings ARE NEVER WIPED!
  */
-export function purgeCacheAndSyncLatest(): void {
+export async function purgeCacheAndSyncLatest(): Promise<void> {
   try {
-    const keysToRemove = [
-      PRODUCTS_KEY,
-      SETTINGS_KEY,
-      CART_KEY,
-      PAGE_CONTENT_KEY,
-      AD_SETTINGS_KEY,
-      CUSTOM_JS_KEY,
-      BLOG_POSTS_KEY,
-      COOKIE_CONSENT_KEY,
-      TEAM_MEMBERS_KEY,
-      'rawal_tools_media_items_v1',
-      'rawal_tools_media_folders_v1',
-    ];
-
-    keysToRemove.forEach((k) => localStorage.removeItem(k));
-    localStorage.setItem(VERSION_KEY, APP_BUILD_SYNC_VERSION);
-
-    // Clear cookies where accessible
+    // 1. Clear accessible client cookies
     document.cookie.split(';').forEach((c) => {
       document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/');
     });
 
-    // Unregister any cached service workers if present
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.getRegistrations().then((registrations) => {
-        registrations.forEach((r) => r.unregister());
-      });
+    // 2. Clear browser CacheStorage API
+    if ('caches' in window) {
+      const names = await window.caches.keys();
+      for (const name of names) {
+        await window.caches.delete(name);
+      }
     }
 
-    // Force hard reload from server
-    window.location.reload();
+    // 3. Unregister service workers if any
+    if ('serviceWorker' in navigator) {
+      const registrations = await navigator.serviceWorker.getRegistrations();
+      for (const r of registrations) {
+        await r.unregister();
+      }
+    }
+
+    // 4. Pre-fetch and refresh real server store data so fresh copy loads immediately
+    try {
+      const serverRes = await fetchServerStoreData();
+      if (serverRes && serverRes.data) {
+        if (serverRes.data.settings) localStorage.setItem(SETTINGS_KEY, JSON.stringify(serverRes.data.settings));
+        if (serverRes.data.products) localStorage.setItem(PRODUCTS_KEY, JSON.stringify(serverRes.data.products));
+        if (serverRes.data.pageContent) localStorage.setItem(PAGE_CONTENT_KEY, JSON.stringify(serverRes.data.pageContent));
+        if (serverRes.data.adSettings) localStorage.setItem(AD_SETTINGS_KEY, JSON.stringify(serverRes.data.adSettings));
+        if (serverRes.data.customJsSettings) localStorage.setItem(CUSTOM_JS_KEY, JSON.stringify(serverRes.data.customJsSettings));
+        if (serverRes.data.blogPosts) localStorage.setItem(BLOG_POSTS_KEY, JSON.stringify(serverRes.data.blogPosts));
+        if (serverRes.data.teamMembers) localStorage.setItem(TEAM_MEMBERS_KEY, JSON.stringify(serverRes.data.teamMembers));
+        if (serverRes.data.reviews) localStorage.setItem(REVIEWS_KEY, JSON.stringify(serverRes.data.reviews));
+        if (serverRes.data.adminAccounts) localStorage.setItem(ADMIN_ACCOUNTS_KEY, JSON.stringify(serverRes.data.adminAccounts));
+      }
+    } catch (_) {}
+
+    // Force hard reload with fresh timestamp query
+    const url = new URL(window.location.href);
+    url.searchParams.set('fresh', Date.now().toString());
+    window.location.replace(url.toString());
   } catch (err) {
     console.error('Error purging cache:', err);
     window.location.reload();
+  }
+}
+
+/**
+ * Admin Logout:
+ * Clears admin session, clears browser cookies, clears CacheStorage,
+ * but keeps store products, WhatsApp details and settings 100% intact!
+ */
+export async function executeAdminLogout(): Promise<void> {
+  try {
+    // 1. Clear admin session locally
+    setStoredAdminAuthenticated(false);
+
+    // 2. Clear server-side session cookies
+    await logoutAdminOnServer();
+
+    // 3. Clear client cookies
+    document.cookie.split(';').forEach((c) => {
+      document.cookie = c.replace(/^ +/, '').replace(/=.*/, '=;expires=' + new Date().toUTCString() + ';path=/');
+    });
+
+    // 4. Clear CacheStorage API
+    if ('caches' in window) {
+      const names = await window.caches.keys();
+      for (const name of names) {
+        await window.caches.delete(name);
+      }
+    }
+
+    // 5. Clear sessionStorage
+    try {
+      sessionStorage.clear();
+    } catch (_) {}
+  } catch (err) {
+    console.error('Error executing admin logout:', err);
   }
 }
 
@@ -147,9 +194,12 @@ export function loadStoredAdminAccounts(): AdminAccountsConfig {
   }
 }
 
-export function saveStoredAdminAccounts(config: AdminAccountsConfig): void {
+export function saveStoredAdminAccounts(config: AdminAccountsConfig, syncServer = true): void {
   try {
     localStorage.setItem(ADMIN_ACCOUNTS_KEY, JSON.stringify(config));
+    if (syncServer) {
+      pushStoreSectionToServer('adminAccounts', config);
+    }
   } catch (err) {
     console.error('Error saving admin accounts:', err);
   }
@@ -252,9 +302,12 @@ export function loadStoredTeamMembers(): TeamMember[] {
   }
 }
 
-export function saveStoredTeamMembers(members: TeamMember[]): void {
+export function saveStoredTeamMembers(members: TeamMember[], syncServer = true): void {
   try {
     localStorage.setItem(TEAM_MEMBERS_KEY, JSON.stringify(members));
+    if (syncServer) {
+      pushStoreSectionToServer('teamMembers', members);
+    }
   } catch (err) {
     console.error('Error saving team members:', err);
   }
@@ -283,9 +336,12 @@ export function loadStoredBlogPosts(): BlogPost[] {
   }
 }
 
-export function saveStoredBlogPosts(posts: BlogPost[]): void {
+export function saveStoredBlogPosts(posts: BlogPost[], syncServer = true): void {
   try {
     localStorage.setItem(BLOG_POSTS_KEY, JSON.stringify(posts));
+    if (syncServer) {
+      pushStoreSectionToServer('blogPosts', posts);
+    }
   } catch (err) {
     console.error('Error saving blog posts:', err);
   }
@@ -325,9 +381,12 @@ export function loadStoredPageContent(): PageContent {
   }
 }
 
-export function saveStoredPageContent(content: PageContent): void {
+export function saveStoredPageContent(content: PageContent, syncServer = true): void {
   try {
     localStorage.setItem(PAGE_CONTENT_KEY, JSON.stringify(content));
+    if (syncServer) {
+      pushStoreSectionToServer('pageContent', content);
+    }
   } catch (err) {
     console.error('Error saving page content:', err);
   }
@@ -351,9 +410,12 @@ export function loadStoredProducts(): Product[] {
   }
 }
 
-export function saveStoredProducts(products: Product[]): void {
+export function saveStoredProducts(products: Product[], syncServer = true): void {
   try {
     localStorage.setItem(PRODUCTS_KEY, JSON.stringify(products));
+    if (syncServer) {
+      pushStoreSectionToServer('products', products);
+    }
   } catch (err) {
     console.error('Error saving products to storage:', err);
   }
@@ -374,9 +436,12 @@ export function loadStoredSettings(): StoreSettings {
   }
 }
 
-export function saveStoredSettings(settings: StoreSettings): void {
+export function saveStoredSettings(settings: StoreSettings, syncServer = true): void {
   try {
     localStorage.setItem(SETTINGS_KEY, JSON.stringify(settings));
+    if (syncServer) {
+      pushStoreSectionToServer('settings', settings);
+    }
   } catch (err) {
     console.error('Error saving settings to storage:', err);
   }
@@ -445,9 +510,12 @@ export function loadStoredAdSettings(): AdSettings {
   }
 }
 
-export function saveStoredAdSettings(settings: AdSettings): void {
+export function saveStoredAdSettings(settings: AdSettings, syncServer = true): void {
   try {
     localStorage.setItem(AD_SETTINGS_KEY, JSON.stringify(settings));
+    if (syncServer) {
+      pushStoreSectionToServer('adSettings', settings);
+    }
   } catch (err) {
     console.error('Error saving Ad settings:', err);
   }
@@ -472,9 +540,12 @@ export function loadStoredCustomJs(): CustomJsSettings {
   }
 }
 
-export function saveStoredCustomJs(settings: CustomJsSettings): void {
+export function saveStoredCustomJs(settings: CustomJsSettings, syncServer = true): void {
   try {
     localStorage.setItem(CUSTOM_JS_KEY, JSON.stringify(settings));
+    if (syncServer) {
+      pushStoreSectionToServer('customJsSettings', settings);
+    }
   } catch (err) {
     console.error('Error saving Custom JS settings:', err);
   }
@@ -501,9 +572,12 @@ export function loadStoredReviews(): ProductReview[] {
   }
 }
 
-export function saveStoredReviews(reviews: ProductReview[]): void {
+export function saveStoredReviews(reviews: ProductReview[], syncServer = true): void {
   try {
     localStorage.setItem(REVIEWS_KEY, JSON.stringify(reviews));
+    if (syncServer) {
+      pushStoreSectionToServer('reviews', reviews);
+    }
   } catch (err) {
     console.error('Error saving reviews:', err);
   }

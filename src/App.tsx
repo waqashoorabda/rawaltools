@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Navbar } from './components/Navbar';
 import { HeroBanner } from './components/HeroBanner';
 import { FilterBar } from './components/FilterBar';
@@ -53,7 +53,9 @@ import {
   exportCatalogJSON,
   getStoredAdminAuthenticated,
   setStoredAdminAuthenticated,
+  executeAdminLogout,
 } from './utils/storage';
+import { fetchServerStoreData, saveServerStoreData } from './utils/storeApi';
 import { applyCustomJsSettings } from './utils/scriptInjector';
 import { 
   trackPageView, 
@@ -84,9 +86,12 @@ import {
   Megaphone,
   Code2,
   BookOpen,
-  QrCode
+  QrCode,
+  RefreshCw,
+  LogOut
 } from 'lucide-react';
 import { buildDirectContactWhatsAppUrl } from './utils/whatsapp';
+import { forcePurgeAndReloadFresh } from './utils/cacheBuster';
 
 export default function App() {
   // Primary State
@@ -105,6 +110,84 @@ export default function App() {
   const [activeArticle, setActiveArticle] = useState<BlogPost | null>(null);
   const [isVisualEditMode, setIsVisualEditMode] = useState<boolean>(false);
   const [adminInitialTab, setAdminInitialTab] = useState<string>('analytics');
+  const isInitialSyncCompleted = useRef(false);
+
+  // Initial Sync with Persistent Server Database
+  useEffect(() => {
+    async function syncStoreWithServer() {
+      try {
+        const res = await fetchServerStoreData();
+        if (res && res.data) {
+          if (res.data.isCustomized) {
+            // Server has customized data! Load it into React state and update localStorage silently
+            if (res.data.settings) {
+              setSettings(res.data.settings);
+              saveStoredSettings(res.data.settings, false);
+            }
+            if (res.data.products && Array.isArray(res.data.products) && res.data.products.length > 0) {
+              setProducts(res.data.products);
+              saveStoredProducts(res.data.products, false);
+            }
+            if (res.data.pageContent) {
+              setPageContent(res.data.pageContent);
+              saveStoredPageContent(res.data.pageContent, false);
+            }
+            if (res.data.adSettings) {
+              setAdSettings(res.data.adSettings);
+              saveStoredAdSettings(res.data.adSettings, false);
+            }
+            if (res.data.customJsSettings) {
+              setCustomJsSettings(res.data.customJsSettings);
+              saveStoredCustomJs(res.data.customJsSettings, false);
+            }
+            if (res.data.blogPosts && Array.isArray(res.data.blogPosts)) {
+              setBlogPosts(res.data.blogPosts);
+              saveStoredBlogPosts(res.data.blogPosts, false);
+            }
+            if (res.data.teamMembers && Array.isArray(res.data.teamMembers)) {
+              setTeamMembers(res.data.teamMembers);
+              saveStoredTeamMembers(res.data.teamMembers, false);
+            }
+            if (res.data.reviews && Array.isArray(res.data.reviews)) {
+              setReviews(res.data.reviews);
+              saveStoredReviews(res.data.reviews, false);
+            }
+            if (res.data.adminAccounts) {
+              setAdminAccounts(res.data.adminAccounts);
+              saveStoredAdminAccounts(res.data.adminAccounts, false);
+            }
+          } else {
+            // Server has default schema; if local client has customized edits, upload to server database
+            const localSettings = loadStoredSettings();
+            const localProducts = loadStoredProducts();
+            const isLocalCustomized = 
+              localSettings.whatsappNumber !== '923001234567' || 
+              localSettings.storeName !== 'Rawal Tools' ||
+              localProducts.length !== 12;
+            if (isLocalCustomized) {
+              await saveServerStoreData({
+                settings: localSettings,
+                products: localProducts,
+                pageContent: loadStoredPageContent(),
+                adSettings: loadStoredAdSettings(),
+                customJsSettings: loadStoredCustomJs(),
+                blogPosts: loadStoredBlogPosts(),
+                teamMembers: loadStoredTeamMembers(),
+                reviews: loadStoredReviews(),
+                adminAccounts: loadStoredAdminAccounts(),
+              });
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[App] Initial store sync note:', err);
+      } finally {
+        isInitialSyncCompleted.current = true;
+      }
+    }
+
+    syncStoreWithServer();
+  }, []);
 
   // Theme State
   const [currentTheme, setCurrentTheme] = useState<ThemeId>(() => {
@@ -129,6 +212,7 @@ export default function App() {
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isAdmin, setIsAdmin] = useState<boolean>(() => getStoredAdminAuthenticated());
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [hasNewVersion, setHasNewVersion] = useState(false);
 
   // Filters State
   const [filters, setFilters] = useState<ProductFilters>({
@@ -140,22 +224,34 @@ export default function App() {
     sortBy: 'featured',
   });
 
-  // Track initial page view & check daily Google Drive backup
+  // Track initial page view, listen for version updates & check daily Google Drive backup
   useEffect(() => {
     trackPageView();
     // Check if daily backup for today has been saved in Google Drive
     checkAndRunDailyAutoBackup();
+
+    const handleVersionUpdate = () => {
+      setHasNewVersion(true);
+    };
+    window.addEventListener('app_version_updated', handleVersionUpdate);
+    return () => {
+      window.removeEventListener('app_version_updated', handleVersionUpdate);
+    };
   }, []);
 
   // Save to storage on changes and queue Google Drive live auto-sync
   useEffect(() => {
-    saveStoredProducts(products);
-    queueChangeAutoSync('Products updated');
+    saveStoredProducts(products, isInitialSyncCompleted.current);
+    if (isInitialSyncCompleted.current) {
+      queueChangeAutoSync('Products updated');
+    }
   }, [products]);
 
   useEffect(() => {
-    saveStoredSettings(settings);
-    queueChangeAutoSync('Settings updated');
+    saveStoredSettings(settings, isInitialSyncCompleted.current);
+    if (isInitialSyncCompleted.current) {
+      queueChangeAutoSync('Settings updated');
+    }
   }, [settings]);
 
   useEffect(() => {
@@ -163,39 +259,53 @@ export default function App() {
   }, [cart]);
 
   useEffect(() => {
-    saveStoredPageContent(pageContent);
-    queueChangeAutoSync('Page content updated');
+    saveStoredPageContent(pageContent, isInitialSyncCompleted.current);
+    if (isInitialSyncCompleted.current) {
+      queueChangeAutoSync('Page content updated');
+    }
   }, [pageContent]);
 
   useEffect(() => {
-    saveStoredAdSettings(adSettings);
-    queueChangeAutoSync('Ad settings updated');
+    saveStoredAdSettings(adSettings, isInitialSyncCompleted.current);
+    if (isInitialSyncCompleted.current) {
+      queueChangeAutoSync('Ad settings updated');
+    }
   }, [adSettings]);
 
   useEffect(() => {
-    saveStoredCustomJs(customJsSettings);
+    saveStoredCustomJs(customJsSettings, isInitialSyncCompleted.current);
     applyCustomJsSettings(customJsSettings);
-    queueChangeAutoSync('Custom JS updated');
+    if (isInitialSyncCompleted.current) {
+      queueChangeAutoSync('Custom JS updated');
+    }
   }, [customJsSettings]);
 
   useEffect(() => {
-    saveStoredBlogPosts(blogPosts);
-    queueChangeAutoSync('Blog articles updated');
+    saveStoredBlogPosts(blogPosts, isInitialSyncCompleted.current);
+    if (isInitialSyncCompleted.current) {
+      queueChangeAutoSync('Blog articles updated');
+    }
   }, [blogPosts]);
 
   useEffect(() => {
-    saveStoredTeamMembers(teamMembers);
-    queueChangeAutoSync('Team members updated');
+    saveStoredTeamMembers(teamMembers, isInitialSyncCompleted.current);
+    if (isInitialSyncCompleted.current) {
+      queueChangeAutoSync('Team members updated');
+    }
   }, [teamMembers]);
 
   useEffect(() => {
-    saveStoredReviews(reviews);
-    queueChangeAutoSync('Reviews updated');
+    saveStoredReviews(reviews, isInitialSyncCompleted.current);
+    if (isInitialSyncCompleted.current) {
+      queueChangeAutoSync('Reviews updated');
+    }
   }, [reviews]);
 
   useEffect(() => {
-    saveStoredAdminAccounts(adminAccounts);
-    queueChangeAutoSync('Admin accounts updated');
+    saveStoredAdminAccounts(adminAccounts, isInitialSyncCompleted.current);
+    if (isInitialSyncCompleted.current) {
+      queueChangeAutoSync('Admin accounts updated');
+    }
   }, [adminAccounts]);
 
   useEffect(() => {
@@ -393,7 +503,8 @@ export default function App() {
   };
 
   // Admin Logout / Lock
-  const handleLockAdmin = () => {
+  const handleLockAdmin = async () => {
+    await executeAdminLogout();
     setIsAdmin(false);
     setIsAdminOpen(false);
     setIsLoginOpen(false);
@@ -733,10 +844,13 @@ export default function App() {
               </button>
 
               <button
+                id="topbar-admin-logout-btn"
                 onClick={handleLockAdmin}
-                className="bg-[#2A0808] hover:bg-[#3D0A0A] text-rose-300 border border-rose-900/50 px-2.5 py-1 text-xs uppercase tracking-wider transition-colors"
+                className="bg-[#2A0808] hover:bg-[#3D0A0A] text-rose-300 border border-rose-900/50 px-2.5 py-1 text-xs uppercase tracking-wider transition-colors font-bold flex items-center gap-1 cursor-pointer"
+                title="Logout admin and clear cache & cookies (لاگ آؤٹ کریں اور کیشے صاف کریں)"
               >
-                Lock Admin
+                <LogOut className="w-3.5 h-3.5 text-rose-400" />
+                <span>Logout Admin</span>
               </button>
             </div>
           </div>
@@ -1346,6 +1460,7 @@ export default function App() {
         onImportCatalog={handleImportCatalog}
         editingProduct={editingProduct}
         onCancelEdit={() => setEditingProduct(null)}
+        onLogout={handleLockAdmin}
         currentTheme={currentTheme}
         onSelectTheme={handleSelectTheme}
         onOpenThemeModal={() => setIsThemeModalOpen(true)}
@@ -1378,6 +1493,32 @@ export default function App() {
         currentTheme={currentTheme}
         onSelectTheme={handleSelectTheme}
       />
+
+      {/* Cross-Device Auto-Update / Fresh Version Alert Toast */}
+      {hasNewVersion && (
+        <div className="fixed bottom-20 sm:bottom-6 left-4 right-4 sm:right-auto sm:max-w-md z-[999] bg-[#0A101D] border-2 border-emerald-500 shadow-2xl p-4 text-white font-sans flex items-center justify-between gap-3 animate-pulse rounded-none">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 flex items-center justify-center shrink-0">
+              <RefreshCw className="w-5 h-5 animate-spin" />
+            </div>
+            <div>
+              <p className="text-xs font-bold text-emerald-400 leading-tight">
+                New Fresh Version Ready (نیا ورژن دستیاب ہے)
+              </p>
+              <p className="text-[11px] text-slate-300 font-mono mt-0.5">
+                Tap to clear cache & load fresh app copy
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => forcePurgeAndReloadFresh('update_toast')}
+            className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-400 text-black text-xs font-bold font-mono uppercase tracking-wider transition-all shadow-md shrink-0 cursor-pointer"
+          >
+            Update Now
+          </button>
+        </div>
+      )}
 
     </div>
   );

@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Phone, Mail, MapPin, MessageCircle, ShieldCheck, Truck, Unlock, Edit3, Check, FileText, Cookie, BookOpen, QrCode, Users } from 'lucide-react';
+import { Phone, Mail, MapPin, MessageCircle, ShieldCheck, Truck, Unlock, Edit3, Check, FileText, Cookie, BookOpen, QrCode, Users, RefreshCw } from 'lucide-react';
 import { StoreSettings, PageContent, PillarPageType } from '../types';
 import { buildDirectContactWhatsAppUrl, cleanWhatsAppNumber } from '../utils/whatsapp';
 import { ThemeId, THEMES } from '../utils/theme';
+import { forcePurgeAndReloadFresh } from '../utils/cacheBuster';
 
 interface FooterProps {
   settings: StoreSettings;
@@ -276,6 +277,16 @@ export const Footer: React.FC<FooterProps> = ({
               className="hover:text-white cursor-pointer"
             >
               Cookies & Privacy (پرائیویسی)
+            </button>
+            <span>•</span>
+            <button
+              type="button"
+              onClick={() => forcePurgeAndReloadFresh('footer_action')}
+              className="text-emerald-400 hover:text-emerald-300 hover:underline cursor-pointer flex items-center gap-1 font-bold"
+              title="Purge browser cache & reload fresh app copy"
+            >
+              <RefreshCw className="w-3 h-3" />
+              <span>Fresh App (کیشے صاف کریں)</span>
             </button>
           </div>
         </div>
