@@ -277,6 +277,19 @@ export function signInWithGsiTokenClient(
 
     const stored = getStoredDriveSession();
     const hint = userHint || stored.user?.email || undefined;
+    const currentOrigin = window.location.origin;
+
+    let isSettled = false;
+    const timeoutTimer = setTimeout(() => {
+      if (!isSettled) {
+        isSettled = true;
+        reject(
+          new Error(
+            `Google OAuth popup timed out. If you saw "Error 400: origin_mismatch", register "${currentOrigin}" in Google Cloud Console > Credentials > Authorized JavaScript origins, or use the Direct Access Token / Firebase option.`
+          )
+        );
+      }
+    }, 45000);
 
     const tokenClient = google.accounts.oauth2.initTokenClient({
       client_id: clientId,
@@ -284,8 +297,13 @@ export function signInWithGsiTokenClient(
         'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
       hint,
       callback: async (tokenResponse: any) => {
+        clearTimeout(timeoutTimer);
+        if (isSettled) return;
+        isSettled = true;
+
         if (tokenResponse.error) {
-          reject(new Error(tokenResponse.error_description || tokenResponse.error));
+          const errDesc = tokenResponse.error_description || tokenResponse.error;
+          reject(new Error(errDesc));
           return;
         }
 
@@ -325,11 +343,13 @@ export function signInWithGsiTokenClient(
 
 /**
  * Sign In with Google and request Google Drive Scopes
+ * Uses Firebase Auth popup first (routes via firebaseapp.com, avoiding GSI origin_mismatch)
  * Gracefully handles Firebase errors, falls back to GSI, and saves persistent session
  */
 export const signInWithGoogleDrive = async (
   customClientId?: string,
-  userHint?: string
+  userHint?: string,
+  forceGsi = false
 ): Promise<{
   user: GoogleDriveUser;
   accessToken: string;
@@ -338,20 +358,23 @@ export const signInWithGoogleDrive = async (
 } | null> => {
   isSigningIn = true;
 
-  // Try Google Identity Services (GSI) first if script is ready
-  const google = typeof window !== 'undefined' ? (window as any).google : null;
-  if (google?.accounts?.oauth2) {
-    try {
-      const gsiResult = await signInWithGsiTokenClient(customClientId, userHint);
-      isSigningIn = false;
-      return gsiResult;
-    } catch (gsiErr: any) {
-      console.warn('GSI Token Client attempt failed, trying Firebase Auth fallback:', gsiErr);
+  // If user explicitly forced direct GSI client
+  if (forceGsi) {
+    const google = typeof window !== 'undefined' ? (window as any).google : null;
+    if (google?.accounts?.oauth2) {
+      try {
+        const gsiResult = await signInWithGsiTokenClient(customClientId, userHint);
+        return gsiResult;
+      } finally {
+        isSigningIn = false;
+      }
     }
   }
 
-  // Fallback to Firebase Popup
+  // 1. Primary Method: Firebase Auth Popup
+  // Uses Firebase Auth domain (emergent-dogfish-k9brs.firebaseapp.com), preventing GSI origin_mismatch
   try {
+    driveProvider.setCustomParameters({ prompt: 'select_account' });
     const result = await signInWithPopup(auth, driveProvider);
     const credential = GoogleAuthProvider.credentialFromResult(result);
 
@@ -383,20 +406,37 @@ export const signInWithGoogleDrive = async (
       isNewAccount,
       previousEmail: lastSynced || prevDisconnected,
     };
-  } catch (error: any) {
-    console.warn('Firebase Sign-in Error:', error);
+  } catch (firebaseErr: any) {
+    console.warn('Firebase Sign-in Error:', firebaseErr);
 
-    // If unauthorized domain, retry with GSI
-    if (error.code === 'auth/unauthorized-domain') {
-      if (google?.accounts?.oauth2) {
-        return await signInWithGsiTokenClient(customClientId, userHint);
+    // If user closed the popup, do not open another popup
+    if (
+      firebaseErr.code === 'auth/popup-closed-by-user' ||
+      firebaseErr.code === 'auth/cancelled-popup-request' ||
+      firebaseErr.message?.includes('closed')
+    ) {
+      throw new Error('Sign in popup was closed before completing.');
+    }
+
+    // 2. Secondary fallback: GSI Token Client if customClientId was provided or Firebase auth failed
+    const google = typeof window !== 'undefined' ? (window as any).google : null;
+    if (google?.accounts?.oauth2 && customClientId) {
+      try {
+        const gsiResult = await signInWithGsiTokenClient(customClientId, userHint);
+        return gsiResult;
+      } catch (gsiErr: any) {
+        console.warn('GSI fallback also failed:', gsiErr);
       }
+    }
+
+    const currentOrigin = typeof window !== 'undefined' ? window.location.origin : '';
+    if (firebaseErr.code === 'auth/unauthorized-domain') {
       throw new Error(
-        `Domain not authorized in Firebase Auth. Added direct Google Identity Services client. Please click retry.`
+        `Domain authorization required for "${currentOrigin}". Add this origin in Firebase Console or Google Cloud Console, or paste an Access Token directly.`
       );
     }
 
-    throw error;
+    throw firebaseErr;
   } finally {
     isSigningIn = false;
   }

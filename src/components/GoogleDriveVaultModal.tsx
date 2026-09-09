@@ -21,6 +21,7 @@ import {
   Settings,
   Key,
   HelpCircle,
+  Copy,
 } from 'lucide-react';
 import { GoogleDriveFile, GoogleDriveUser, MediaCategory, MediaItem } from '../types';
 import {
@@ -856,16 +857,49 @@ export const GoogleDriveVaultModal: React.FC<GoogleDriveVaultModalProps> = ({
               <div className="bg-[#0C1017] border border-[#1C2538] p-4 rounded-xl space-y-3 font-sans text-xs text-slate-300">
                 <div className="flex items-center gap-2 font-bold text-white">
                   <HelpCircle className="w-4 h-4 text-blue-400" />
-                  <span>Custom Domain (rawaltools.com) Authorized Domains Guide</span>
+                  <span>Google OAuth Domain & Origin Configuration Guide (Error 400: origin_mismatch)</span>
                 </div>
+
                 <div className="space-y-2 text-[11px] text-slate-400 leading-relaxed">
                   <p>
-                    جب آپ <strong>rawaltools.com</strong> یا Vercel پر اپنی ایپلیکیشن چلاتے ہیں:
+                    اگر گوگل سائن اِن کے دوران <strong>Error 400: origin_mismatch</strong> آئے، تو Google Cloud Console میں جا کر اپنے OAuth Client ID کے <strong>Authorised JavaScript origins</strong> میں نیچے دیا گیا ایڈریس شامل کریں:
                   </p>
-                  <ol className="list-decimal pl-4 space-y-1 text-slate-300">
-                    <li>ہماری ایپ میں اب Google Identity Services موجود ہے جو تمام ڈومینز پر ڈائریکٹ کام کرتی ہے۔</li>
+
+                  <div className="flex items-center gap-2 bg-[#141B2B] p-2 rounded-lg border border-[#2B3954]">
+                    <code className="flex-1 text-[11px] text-amber-300 font-mono truncate select-all">
+                      {typeof window !== 'undefined' ? window.location.origin : ''}
+                    </code>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (typeof window !== 'undefined') {
+                          navigator.clipboard.writeText(window.location.origin);
+                          showToast('✓ Origin URL copied!');
+                        }
+                      }}
+                      className="flex items-center gap-1 px-2.5 py-1 bg-amber-400/20 hover:bg-amber-400 text-amber-300 hover:text-black rounded text-[10px] font-mono font-bold transition-all shrink-0 cursor-pointer"
+                    >
+                      <Copy className="w-3 h-3" />
+                      <span>Copy Origin</span>
+                    </button>
+                  </div>
+
+                  <ol className="list-decimal pl-4 space-y-1 text-slate-300 pt-1">
                     <li>
-                      اگر آپ Firebase Console استعمال کر رہے ہوں تو <strong>Firebase Console &gt; Authentication &gt; Settings &gt; Authorized Domains</strong> میں جا کر <code className="text-amber-300">rawaltools.com</code> اور <code className="text-amber-300">rawaltool.com</code> ایڈ کر سکتے ہیں۔
+                      <a
+                        href="https://console.cloud.google.com/apis/credentials"
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sky-400 hover:underline inline-flex items-center gap-1"
+                      >
+                        Google Cloud Console Credentials <ExternalLink className="w-3 h-3 inline" />
+                      </a> کھولیں اور اپنا OAuth 2.0 Client ID منتخب کریں۔
+                    </li>
+                    <li>
+                      <strong>Authorised JavaScript origins</strong> میں کاپی کیا ہوا URL پیسٹ کریں اور Save کریں۔
+                    </li>
+                    <li>
+                      متبادل طور پر، اوپر دیے گئے <strong>Direct OAuth Access Token</strong> میں ٹوکن پیسٹ کر کے بغیر کسی سیٹنگ کے فوری کنیکٹ کر سکتے ہیں۔
                     </li>
                   </ol>
                 </div>

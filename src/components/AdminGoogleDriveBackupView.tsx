@@ -29,6 +29,9 @@ import {
   Lock,
   UserCheck,
   Zap,
+  Copy,
+  Key,
+  HelpCircle,
 } from 'lucide-react';
 import {
   GoogleDriveFile,
@@ -44,6 +47,8 @@ import {
   getConnectedDriveUser,
   getStoredDriveSession,
   initDriveAuth,
+  setDriveAccessToken,
+  fetchGoogleProfile,
 } from '../services/googleDriveService';
 import {
   gatherCompleteAppBackupData,
@@ -112,6 +117,12 @@ export const AdminGoogleDriveBackupView: React.FC<AdminGoogleDriveBackupViewProp
   // Sync Logs
   const [syncLogs, setSyncLogs] = useState<SyncLogEntry[]>(() => getSyncLogs());
 
+  // OAuth Error & Resolution State
+  const [showOAuthHelp, setShowOAuthHelp] = useState<boolean>(false);
+  const [manualTokenInput, setManualTokenInput] = useState<string>('');
+  const [isApplyingToken, setIsApplyingToken] = useState<boolean>(false);
+  const [copiedOrigin, setCopiedOrigin] = useState<boolean>(false);
+
   // Initialize Drive Auth listener and restore persistent session
   useEffect(() => {
     const unsub = initDriveAuth(
@@ -153,14 +164,46 @@ export const AdminGoogleDriveBackupView: React.FC<AdminGoogleDriveBackupViewProp
     setTimeout(() => setToastMessage(null), 5000);
   };
 
-  const handleGoogleSignIn = async () => {
+  const handleApplyManualToken = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    const token = manualTokenInput.trim();
+    if (!token) return;
+    setIsApplyingToken(true);
+    try {
+      setDriveAccessToken(token);
+      const profile = await fetchGoogleProfile(token);
+      setIsAuthenticated(true);
+      setDriveUser(profile);
+      setAuthError(null);
+      showToast(`✓ Google Drive connected successfully via access token (${profile.email || 'Token'})!`);
+      await loadDriveBackupsList();
+      setShowOAuthHelp(false);
+      setManualTokenInput('');
+    } catch (err: any) {
+      showToast('Token validation error: ' + (err.message || 'Invalid token'), 'error');
+    } finally {
+      setIsApplyingToken(false);
+    }
+  };
+
+  const handleCopyCurrentOrigin = () => {
+    if (typeof window !== 'undefined') {
+      navigator.clipboard.writeText(window.location.origin);
+      setCopiedOrigin(true);
+      setTimeout(() => setCopiedOrigin(false), 3000);
+      showToast('✓ Current origin URL copied: ' + window.location.origin);
+    }
+  };
+
+  const handleGoogleSignIn = async (forceGsi = false) => {
     setIsAuthenticating(true);
     setAuthError(null);
     try {
-      const res = await signInWithGoogleDrive();
+      const res = await signInWithGoogleDrive(undefined, undefined, forceGsi);
       if (res) {
         setIsAuthenticated(true);
         setDriveUser(res.user);
+        setShowOAuthHelp(false);
 
         // Check if this is a newly connected email (or switched account)
         if (res.isNewAccount) {
@@ -187,8 +230,10 @@ export const AdminGoogleDriveBackupView: React.FC<AdminGoogleDriveBackupViewProp
       }
     } catch (err: any) {
       console.error('Sign-in failed:', err);
-      setAuthError(err.message || 'Google Drive authentication failed.');
-      showToast(err.message || 'Authentication error', 'error');
+      const msg = err.message || 'Google Drive authentication failed.';
+      setAuthError(msg);
+      setShowOAuthHelp(true);
+      showToast(msg, 'error');
     } finally {
       setIsAuthenticating(false);
     }
@@ -426,18 +471,30 @@ export const AdminGoogleDriveBackupView: React.FC<AdminGoogleDriveBackupViewProp
                 </button>
               </div>
             ) : (
-              <button
-                onClick={handleGoogleSignIn}
-                disabled={isAuthenticating}
-                className="flex items-center justify-center gap-2.5 px-5 py-3 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-bold text-xs uppercase tracking-wider rounded-xl font-mono transition-all shadow-lg active:scale-95 cursor-pointer"
-              >
-                {isAuthenticating ? (
-                  <RefreshCw className="w-4 h-4 animate-spin" />
-                ) : (
-                  <Cloud className="w-4 h-4" />
-                )}
-                <span>Connect with Google Drive</span>
-              </button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={() => handleGoogleSignIn(false)}
+                  disabled={isAuthenticating}
+                  className="flex items-center justify-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-black font-bold text-xs uppercase tracking-wider rounded-xl font-mono transition-all shadow-lg active:scale-95 cursor-pointer"
+                >
+                  {isAuthenticating ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <Cloud className="w-4 h-4" />
+                  )}
+                  <span>Connect with Google Drive</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setShowOAuthHelp(!showOAuthHelp)}
+                  className="p-2.5 bg-[#171E2E] hover:bg-[#20293D] text-slate-300 hover:text-amber-400 rounded-xl border border-[#2B3954] text-xs font-mono transition-all flex items-center gap-1.5 cursor-pointer"
+                  title="OAuth Origin / Domain Settings & Direct Token"
+                >
+                  <Key className="w-3.5 h-3.5 text-amber-400" />
+                  <span className="hidden sm:inline">Settings</span>
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -452,10 +509,132 @@ export const AdminGoogleDriveBackupView: React.FC<AdminGoogleDriveBackupViewProp
           </div>
         )}
 
-        {authError && (
-          <div className="mt-4 p-3 bg-rose-950/40 border border-rose-800/50 rounded-xl text-xs text-rose-300 flex items-center gap-2 font-mono">
-            <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
-            <span>{authError}</span>
+        {/* OAuth Help & Origin Mismatch Resolution Panel */}
+        {(showOAuthHelp || authError) && !isAuthenticated && (
+          <div className="mt-4 p-4.5 bg-[#111724] border border-amber-500/40 rounded-2xl space-y-4 shadow-xl">
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/30 flex items-center justify-center text-amber-400 shrink-0">
+                  <ShieldCheck className="w-4 h-4" />
+                </div>
+                <div>
+                  <h4 className="text-sm font-bold text-white flex items-center gap-2">
+                    <span>Google OAuth & Domain Setup Helper</span>
+                    <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-amber-400/20 text-amber-300 border border-amber-400/40">
+                      Error 400: origin_mismatch Solution
+                    </span>
+                  </h4>
+                  <p className="text-xs text-slate-400">
+                    گوگل سائن اِن کے دوران اگر "Error 400: origin_mismatch" یا ڈومین ایرر آئے تو نیچے دیے گئے 2 آسان طریقوں میں سے کوئی ایک استعمال کریں:
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowOAuthHelp(false)}
+                className="text-slate-400 hover:text-white p-1 rounded-lg hover:bg-white/10"
+              >
+                ✕
+              </button>
+            </div>
+
+            {authError && (
+              <div className="p-3 bg-rose-950/50 border border-rose-800/60 rounded-xl text-xs text-rose-300 flex items-center gap-2 font-mono">
+                <AlertCircle className="w-4 h-4 shrink-0 text-rose-400" />
+                <span>{authError}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-[#1F293D]">
+              {/* Option 1: Direct Access Token (100% Instant, Zero Config) */}
+              <div className="bg-[#0C101A] border border-[#20293D] rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-2 text-emerald-400 text-xs font-mono font-bold uppercase tracking-wider">
+                  <Zap className="w-4 h-4" />
+                  <span>طریقہ 1: Direct Access Token (فوری کنکشن)</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  کسی بھی ڈومین یا کنسول سیٹنگ کے بغیر فوری گوگل ڈرائیو کنیکٹ کرنے کے لیے OAuth Access Token درج کریں:
+                </p>
+
+                <form onSubmit={handleApplyManualToken} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="password"
+                      value={manualTokenInput}
+                      onChange={(e) => setManualTokenInput(e.target.value)}
+                      placeholder="Paste Bearer Token (ya29...)"
+                      className="flex-1 bg-[#141B2B] text-white px-3 py-2 rounded-lg border border-[#2B3954] focus:border-emerald-400 text-xs font-mono outline-none"
+                    />
+                    <button
+                      type="submit"
+                      disabled={isApplyingToken || !manualTokenInput.trim()}
+                      className="px-3.5 py-2 bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-black font-bold rounded-lg text-xs font-mono uppercase tracking-wider cursor-pointer transition-all shrink-0"
+                    >
+                      {isApplyingToken ? 'Connecting...' : 'Connect'}
+                    </button>
+                  </div>
+                  <div className="flex items-center justify-between text-[10px] text-slate-500 font-mono">
+                    <span>گوگل پلے گراؤنڈ سے 10 سیکنڈ میں ٹوکن لیں:</span>
+                    <a
+                      href="https://developers.google.com/oauthplayground"
+                      target="_blank"
+                      rel="noreferrer"
+                      className="text-amber-400 hover:underline flex items-center gap-1"
+                    >
+                      <span>OAuth Playground</span>
+                      <ExternalLink className="w-3 h-3" />
+                    </a>
+                  </div>
+                </form>
+              </div>
+
+              {/* Option 2: Register JavaScript Origin in Google Cloud Console */}
+              <div className="bg-[#0C101A] border border-[#20293D] rounded-xl p-4 space-y-3">
+                <div className="flex items-center gap-2 text-amber-400 text-xs font-mono font-bold uppercase tracking-wider">
+                  <Sliders className="w-4 h-4" />
+                  <span>طریقہ 2: Google Console میں Origin درج کریں</span>
+                </div>
+                <p className="text-[11px] text-slate-400 leading-relaxed">
+                  Google Cloud Console میں جا کر اپنے OAuth Client ID کے <strong>Authorised JavaScript origins</strong> میں یہ ایڈریس شامل کریں:
+                </p>
+
+                <div className="flex items-center gap-2 bg-[#141B2B] p-2 rounded-lg border border-[#2B3954]">
+                  <code className="flex-1 text-[11px] text-amber-300 font-mono truncate select-all">
+                    {typeof window !== 'undefined' ? window.location.origin : ''}
+                  </code>
+                  <button
+                    type="button"
+                    onClick={handleCopyCurrentOrigin}
+                    className="flex items-center gap-1 px-2.5 py-1 bg-amber-400/20 hover:bg-amber-400 text-amber-300 hover:text-black rounded text-[10px] font-mono font-bold transition-all shrink-0 cursor-pointer"
+                  >
+                    {copiedOrigin ? <Check className="w-3 h-3 text-emerald-400" /> : <Copy className="w-3 h-3" />}
+                    <span>{copiedOrigin ? 'Copied!' : 'Copy'}</span>
+                  </button>
+                </div>
+
+                <div className="flex items-center justify-between text-[10px] font-mono pt-1">
+                  <a
+                    href="https://console.cloud.google.com/apis/credentials"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-sky-400 hover:underline flex items-center gap-1"
+                  >
+                    <span>Open Google Cloud Credentials</span>
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+
+                  <button
+                    type="button"
+                    onClick={() => handleGoogleSignIn(false)}
+                    disabled={isAuthenticating}
+                    className="text-amber-400 hover:underline flex items-center gap-1 cursor-pointer font-bold"
+                  >
+                    <RefreshCw className={`w-3 h-3 ${isAuthenticating ? 'animate-spin' : ''}`} />
+                    <span>Retry Login</span>
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
         )}
       </div>
