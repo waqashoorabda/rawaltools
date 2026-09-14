@@ -172,8 +172,6 @@ export const AdminModal: React.FC<AdminModalProps> = ({
   onViewProductDetails,
   onLogout: onLogoutProp,
 }) => {
-  if (!isOpen) return null;
-
   // Reviews State
   const [reviewsState, setReviewsState] = useState<ProductReview[]>(() => 
     initialReviewsProp || loadStoredReviews()
@@ -928,6 +926,8 @@ export const AdminModal: React.FC<AdminModalProps> = ({
 
   const activeItem = navItems.find((item) => item.id === activeTab) || navItems[0];
   const isCurrentTabAuthorized = activeRoleState === 'super_admin' || hasAdminPermission(currentAccount, activeItem.permission);
+
+  if (!isOpen) return null;
 
   return (
     <div className="admin-modal-root fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 font-sans overflow-hidden">

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   Check, 
@@ -35,13 +35,18 @@ export const FrontpageQuickEditModal: React.FC<FrontpageQuickEditModalProps> = (
   onSaveContent,
   onSaveSettings,
 }) => {
-  if (!isOpen) return null;
-
   const themeConfig = THEMES[theme] || THEMES.industrial_yellow;
   const [formData, setFormData] = useState<PageContent>({ ...pageContent });
   const [storeData, setStoreData] = useState<StoreSettings>({ ...settings });
   const [activeSection, setActiveSection] = useState<'hero' | 'banners' | 'categories' | 'catalog' | 'footer' | 'store'>('hero');
   const [saveSuccess, setSaveSuccess] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setFormData({ ...pageContent });
+      setStoreData({ ...settings });
+    }
+  }, [isOpen, pageContent, settings]);
 
   const handleFieldChange = (field: keyof PageContent, val: any) => {
     setFormData((prev) => ({ ...prev, [field]: val }));
@@ -67,6 +72,8 @@ export const FrontpageQuickEditModal: React.FC<FrontpageQuickEditModalProps> = (
       setFormData({ ...DEFAULT_PAGE_CONTENT });
     }
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 font-sans">

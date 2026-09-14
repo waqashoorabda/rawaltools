@@ -31,14 +31,13 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
   onSuccess,
   settings,
 }) => {
-  if (!isOpen) return null;
-
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [adminAccounts, setAdminAccounts] = useState<AdminAccountsConfig>(() => loadStoredAdminAccounts());
 
   useEffect(() => {
+    if (!isOpen) return;
     const loaded = loadStoredAdminAccounts();
     // Synchronize Super Admin PIN with settings.adminPin if present
     if (settings.adminPin && settings.adminPin.trim() !== loaded.superAdmin.pin) {
@@ -46,6 +45,8 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
     }
     setAdminAccounts(loaded);
   }, [settings.adminPin, isOpen]);
+
+  if (!isOpen) return null;
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();

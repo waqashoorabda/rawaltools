@@ -36,8 +36,6 @@ export const TeamModal: React.FC<TeamModalProps> = ({
   settings,
   theme = 'industrial_yellow',
 }) => {
-  if (!isOpen) return null;
-
   const themeConfig = THEMES[theme] || THEMES.industrial_yellow;
   const isLight = !themeConfig.isDark;
 
@@ -47,18 +45,20 @@ export const TeamModal: React.FC<TeamModalProps> = ({
 
   // Extract all unique areas covered
   const allAreas = useMemo(() => {
+    if (!isOpen) return [];
     const set = new Set<string>();
     teamMembers.forEach((m) => {
       m.areasCovered?.forEach((area) => set.add(area));
     });
     return Array.from(set);
-  }, [teamMembers]);
+  }, [isOpen, teamMembers]);
 
   // Departments list
   const departments = ['All', 'Management', 'Sales', 'Logistics & Dispatch', 'Technical Support'];
 
   // Filtered members
   const filteredMembers = useMemo(() => {
+    if (!isOpen) return [];
     return teamMembers
       .filter((m) => {
         // Department filter
@@ -80,7 +80,7 @@ export const TeamModal: React.FC<TeamModalProps> = ({
         return true;
       })
       .sort((a, b) => (a.order || 99) - (b.order || 99));
-  }, [teamMembers, selectedDept, selectedArea, searchQuery]);
+  }, [isOpen, teamMembers, selectedDept, selectedArea, searchQuery]);
 
   // Generate personalized WhatsApp click url
   const getPersonalWhatsAppUrl = (member: TeamMember) => {
@@ -92,6 +92,8 @@ export const TeamModal: React.FC<TeamModalProps> = ({
     );
     return `https://wa.me/${rawNumber}?text=${message}`;
   };
+
+  if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-4 md:p-6 font-sans overflow-hidden animate-fadeIn">

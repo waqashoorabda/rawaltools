@@ -53,13 +53,11 @@ export const ProductQrModal: React.FC<ProductQrModalProps> = ({
   onSelectProduct,
   onViewProductDetails,
 }) => {
-  if (!isOpen || !product) return null;
-
   const themeConfig = THEMES[theme] || THEMES.industrial_yellow;
   const isLight = !themeConfig.isDark;
 
   const [selectedSize, setSelectedSize] = useState<string>(() => {
-    return product.defaultSize || (product.availableSizes && product.availableSizes[0]) || '';
+    return product ? (product.defaultSize || (product.availableSizes && product.availableSizes[0]) || '') : '';
   });
   const [quantity, setQuantity] = useState<number>(1);
   const [copied, setCopied] = useState<boolean>(false);
@@ -85,9 +83,11 @@ export const ProductQrModal: React.FC<ProductQrModalProps> = ({
   const printAreaRef = useRef<HTMLDivElement>(null);
 
   // Deep link URL encoded inside the QR Code: Includes both query param (?product=) and hash (#product-)
-  const qrTargetUrl = typeof window !== 'undefined' 
+  const qrTargetUrl = typeof window !== 'undefined' && product
     ? `${window.location.origin}/?product=${encodeURIComponent(product.id)}#product-${encodeURIComponent(product.id)}`
-    : `https://rawaltools.pk/?product=${product.id}#product-${product.id}`;
+    : product
+    ? `https://rawaltools.pk/?product=${product.id}#product-${product.id}`
+    : '';
 
   // Update selected size if product changes
   useEffect(() => {
@@ -233,7 +233,7 @@ export const ProductQrModal: React.FC<ProductQrModalProps> = ({
 
   // Switch scanner mode handler
   useEffect(() => {
-    if (activeTab === 'scanner_sim' && scannerMode === 'camera') {
+    if (isOpen && activeTab === 'scanner_sim' && scannerMode === 'camera') {
       startCamera();
     } else {
       stopCamera();
@@ -241,7 +241,7 @@ export const ProductQrModal: React.FC<ProductQrModalProps> = ({
     return () => {
       stopCamera();
     };
-  }, [activeTab, scannerMode]);
+  }, [isOpen, activeTab, scannerMode]);
 
   // Handle uploaded QR image file
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -318,6 +318,8 @@ export const ProductQrModal: React.FC<ProductQrModalProps> = ({
       p.category.toLowerCase().includes(q)
     );
   });
+
+  if (!isOpen || !product) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto bg-black/85 backdrop-blur-md flex items-center justify-center p-3 sm:p-6 font-sans">

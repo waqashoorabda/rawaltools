@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   MessageCircle, 
@@ -58,19 +58,25 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   isAdmin,
   onEditProduct,
 }) => {
-  if (!isOpen || !product) return null;
-
   const themeConfig = THEMES[theme] || THEMES.industrial_yellow;
   const isLight = !themeConfig.isDark;
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [quantity, setQuantity] = useState(1);
-  const [selectedSize, setSelectedSize] = useState(
-    product.defaultSize || (product.availableSizes && product.availableSizes[0]) || ''
-  );
+  const [selectedSize, setSelectedSize] = useState('');
   const [customerCity, setCustomerCity] = useState('');
   const [customerNote, setCustomerNote] = useState('');
   const [copiedLink, setCopiedLink] = useState(false);
+
+  useEffect(() => {
+    if (product) {
+      setActiveImageIndex(0);
+      setQuantity(1);
+      setSelectedSize(product.defaultSize || (product.availableSizes && product.availableSizes[0]) || '');
+    }
+  }, [product?.id]);
+
+  if (!isOpen || !product) return null;
 
   const images = product.images && product.images.length > 0
     ? product.images

@@ -53,8 +53,6 @@ export const CartModal: React.FC<CartModalProps> = ({
   onRemoveItem,
   onClearCart,
 }) => {
-  if (!isOpen) return null;
-
   const themeConfig = THEMES[theme] || THEMES.industrial_yellow;
   const isLight = !themeConfig.isDark;
 
@@ -85,6 +83,7 @@ export const CartModal: React.FC<CartModalProps> = ({
 
   // Calculate Relevant / Compatible Products
   const relevantProducts = useMemo(() => {
+    if (!isOpen) return [];
     const cartProductIds = new Set(cart.map((i) => i.product.id));
     const cartCategories = new Set(cart.map((i) => i.product.category));
 
@@ -99,7 +98,9 @@ export const CartModal: React.FC<CartModalProps> = ({
     );
 
     return [...sameCatProducts, ...otherProducts].slice(0, 4);
-  }, [cart, products]);
+  }, [isOpen, cart, products]);
+
+  if (!isOpen) return null;
 
   // Handle Recommendation Size/Quantity change
   const handleRecSizeChange = (productId: string, size: string) => {
