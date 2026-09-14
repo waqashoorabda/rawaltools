@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { 
   Sparkles, 
   X, 
@@ -11,14 +11,21 @@ import {
   Sliders, 
   Tag, 
   CheckSquare, 
-  Square,
-  HelpCircle,
-  Zap,
-  Info
+  Square, 
+  HelpCircle, 
+  Zap, 
+  Info,
+  ShieldCheck,
+  Lock
 } from 'lucide-react';
 import { Product, BatchCategorizationResult } from '../types';
 import { CATEGORIES } from '../data/defaultProducts';
-import { categorizeProductsBatch, isProductMissingCategory } from '../services/geminiCategoryService';
+import { 
+  categorizeProductsBatch, 
+  isProductMissingCategory, 
+  getGeminiApiStatus, 
+  GeminiEngineStatus 
+} from '../services/geminiCategoryService';
 
 interface AdminAiCategorizerModalProps {
   isOpen: boolean;
@@ -45,6 +52,16 @@ export const AdminAiCategorizerModal: React.FC<AdminAiCategorizerModalProps> = (
   const [error, setError] = useState<string | null>(null);
   const [results, setResults] = useState<Record<string, CategoryResultItem>>({});
   const [appliedCount, setAppliedCount] = useState<number | null>(null);
+  const [engineStatus, setEngineStatus] = useState<GeminiEngineStatus | null>(null);
+
+  // Fetch live Gemini engine & security status
+  useEffect(() => {
+    if (isOpen) {
+      getGeminiApiStatus().then((status) => {
+        setEngineStatus(status);
+      });
+    }
+  }, [isOpen]);
 
   // Available standard categories
   const standardCategories = useMemo(() => {
@@ -182,26 +199,32 @@ export const AdminAiCategorizerModal: React.FC<AdminAiCategorizerModalProps> = (
               <Sparkles className="w-5 h-5" />
             </div>
             <div>
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2">
                 <h3 className="font-bold text-base sm:text-lg text-white">
                   Gemini AI Product Categorization Engine
                 </h3>
                 <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-400/10 text-amber-300 border border-amber-400/30">
-                  gemini-3.7-flash
+                  {engineStatus?.configured ? 'gemini-3.8-flash (Active)' : 'Hardware Taxonomy Engine'}
+                </span>
+                <span className="hidden sm:inline-flex items-center gap-1 text-[10px] font-mono font-semibold px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                  <ShieldCheck className="w-3 h-3" />
+                  <span>GitHub Safe & Key Hidden</span>
                 </span>
               </div>
               <p className="text-xs text-slate-400 font-mono">
-                Analyze product titles, specifications & descriptions to automatically categorize uncategorized tools.
+                Analyze product titles, specifications & descriptions to automatically categorize tools with server-side AI.
               </p>
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-white bg-[#1C2538] hover:bg-[#25324C] border border-[#2D3C59] rounded-lg transition-colors cursor-pointer"
-          >
-            <X className="w-4 h-4" />
-          </button>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onClose}
+              className="p-1.5 text-slate-400 hover:text-white bg-[#1C2538] hover:bg-[#25324C] border border-[#2D3C59] rounded-lg transition-colors cursor-pointer"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
         </div>
 
         {/* Toolbar & Filter Bar */}
@@ -474,8 +497,13 @@ export const AdminAiCategorizerModal: React.FC<AdminAiCategorizerModalProps> = (
 
         {/* Footer */}
         <div className="shrink-0 bg-[#111723] px-5 py-3 border-t border-[#202A3C] flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
-          <div className="text-slate-400 text-[11px]">
-            ⚡ Powered by Gemini 3.7 Flash server-side categorization.
+          <div className="flex items-center gap-2 text-slate-400 text-[11px]">
+            <Lock className="w-3.5 h-3.5 text-emerald-400" />
+            <span>
+              {engineStatus?.configured 
+                ? 'Protected Server Proxy: GEMINI_API_KEY is isolated on backend server & gitignored. Zero browser leakage.' 
+                : 'Built-in Hardware Taxonomy Engine is active. Configure GEMINI_API_KEY for generative AI reasoning.'}
+            </span>
           </div>
 
           <div className="flex items-center gap-3">

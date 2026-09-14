@@ -1,5 +1,15 @@
 import { Product, CategorySuggestion, BatchCategorizationResult } from '../types';
 
+export interface GeminiEngineStatus {
+  configured: boolean;
+  primaryModel: string;
+  fallbackModel: string;
+  rulesEngine: string;
+  protected: boolean;
+  serverSideOnly: boolean;
+  rateLimit: string;
+}
+
 export function isProductMissingCategory(product: Product): boolean {
   if (!product.category) return true;
   const trimmed = product.category.trim();
@@ -8,6 +18,35 @@ export function isProductMissingCategory(product: Product): boolean {
   if (trimmed.toLowerCase() === 'none') return true;
   if (trimmed === 'All Products') return true;
   return false;
+}
+
+export async function getGeminiApiStatus(): Promise<GeminiEngineStatus> {
+  try {
+    const res = await fetch('/api/gemini/status');
+    if (!res.ok) {
+      return {
+        configured: false,
+        primaryModel: 'gemini-3.8-flash',
+        fallbackModel: 'gemini-3.1-flash-lite',
+        rulesEngine: 'Active (Industrial Hardware Taxonomy)',
+        protected: true,
+        serverSideOnly: true,
+        rateLimit: '30 req/min',
+      };
+    }
+    const json = await res.json();
+    return json.data;
+  } catch {
+    return {
+      configured: false,
+      primaryModel: 'gemini-3.8-flash',
+      fallbackModel: 'gemini-3.1-flash-lite',
+      rulesEngine: 'Active (Industrial Hardware Taxonomy)',
+      protected: true,
+      serverSideOnly: true,
+      rateLimit: '30 req/min',
+    };
+  }
 }
 
 export async function suggestProductCategory(params: {

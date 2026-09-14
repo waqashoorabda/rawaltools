@@ -1,9 +1,14 @@
 import express from 'express';
 import path from 'path';
 import dotenv from 'dotenv';
-import { GoogleGenAI, Type } from '@google/genai';
 import { createServer as createViteServer } from 'vite';
 import { initStoreDatabase, getStoreDatabase, saveStoreDatabase } from './server/storeData.js';
+import { 
+  suggestCategoryWithGemini, 
+  categorizeBatchWithGemini, 
+  getGeminiStatus, 
+  checkRateLimit 
+} from './server/geminiService.js';
 
 dotenv.config();
 
@@ -29,22 +34,6 @@ app.use('/api', (req, res, next) => {
   });
   next();
 });
-
-// Lazy initialization / getter for Gemini client
-function getGeminiClient(): GoogleGenAI {
-  const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) {
-    throw new Error('GEMINI_API_KEY is not configured. Please configure your Gemini API Key in the AI Studio settings.');
-  }
-  return new GoogleGenAI({
-    apiKey,
-    httpOptions: {
-      headers: {
-        'User-Agent': 'aistudio-build',
-      },
-    },
-  });
-}
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {
@@ -129,186 +118,100 @@ app.get('/api/clear-site-data', (req, res) => {
   res.redirect(redirectTo);
 });
 
-// Single product category suggestion endpoint
+// Gemini AI Status & Diagnostics Endpoint (Sanitized, never reveals secret key string)
+app.get('/api/gemini/status', (req, res) => {
+  const status = getGeminiStatus();
+  res.json({
+    success: true,
+    data: status,
+  });
+});
+
+// Single product category suggestion endpoint with anti-abuse rate limiting and model fallback
 app.post('/api/gemini/suggest-category', async (req, res) => {
+  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const rate = checkRateLimit(clientIp);
+
+  if (!rate.allowed) {
+    return res.status(429).json({
+      success: false,
+      error: 'Rate limit reached for AI categorization. Please wait 1 minute before making further requests.',
+      resetInMs: rate.resetInMs,
+    });
+  }
+
   try {
-    const { title, shortDescription, fullDescription, availableCategories } = req.body;
+    const { title, shortDescription, fullDescription, availableCategories } = req.body || {};
 
     if (!title && !shortDescription && !fullDescription) {
       return res.status(400).json({ 
+        success: false,
         error: 'At least a title or description is required for category analysis.' 
       });
     }
 
-    const categoriesList = Array.isArray(availableCategories) && availableCategories.length > 0
-      ? availableCategories.filter((c: string) => c !== 'All Products')
-      : [
-          'Power Tools',
-          'Hand Tools',
-          'Welding & Cutting',
-          'Measuring & Testing',
-          'Workshop Machinery',
-          'Drilling & Fasteners',
-          'Safety & Equipment',
-        ];
-
-    const ai = getGeminiClient();
-
-    const prompt = `Analyze this industrial / hardware tool product and determine the single most accurate category for it from the allowed categories list.
-    
-Product Title: ${title || 'N/A'}
-Short Description: ${shortDescription || 'N/A'}
-Detailed Description: ${fullDescription || 'N/A'}
-
-Allowed Categories:
-${categoriesList.map((c: string) => `- ${c}`).join('\n')}
-
-If none of the allowed categories fit well, you may suggest an appropriate custom category name.
-
-Provide your decision with:
-1. suggestedCategory (Must be one of the allowed categories if applicable, or a concise clean category name)
-2. confidence (A number from 0 to 1, e.g. 0.95)
-3. reason (A short 1-sentence explanation in English/Urdu terms of why this category fits)`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.7-flash',
-      contents: prompt,
-      config: {
-        systemInstruction: 'You are an expert industrial hardware catalog categorization assistant for Rawal Tools. Your job is to accurately classify power tools, machinery, hand tools, welding machines, measuring equipment, drill bits, and safety gear based on product titles and technical descriptions.',
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            suggestedCategory: {
-              type: Type.STRING,
-              description: 'The best matching category name.',
-            },
-            confidence: {
-              type: Type.NUMBER,
-              description: 'Confidence score between 0 and 1.',
-            },
-            reason: {
-              type: Type.STRING,
-              description: 'Short explanation of why this category was selected based on keywords.',
-            },
-          },
-          required: ['suggestedCategory', 'confidence', 'reason'],
-        },
-      },
+    const result = await suggestCategoryWithGemini({
+      title,
+      shortDescription,
+      fullDescription,
+      availableCategories,
     });
-
-    const resultText = response.text || '{}';
-    const parsed = JSON.parse(resultText);
 
     return res.json({
       success: true,
-      data: parsed,
+      data: {
+        suggestedCategory: result.suggestedCategory,
+        confidence: result.confidence,
+        reason: result.reason,
+      },
+      provider: result.provider,
+      modelUsed: result.modelUsed,
     });
   } catch (error: any) {
-    console.error('Error in suggest-category API:', error);
+    console.error('Error in suggest-category API:', error?.message || error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Failed to analyze product category with Gemini.',
+      error: 'Unable to analyze category at this moment. Please try again or assign manually.',
     });
   }
 });
 
-// Batch products categorization endpoint (for products missing a category or bulk audit)
+// Batch products categorization endpoint with strict rate limiting and batch limits
 app.post('/api/gemini/categorize-batch', async (req, res) => {
+  const clientIp = (req.headers['x-forwarded-for'] as string) || req.socket.remoteAddress || 'unknown';
+  const rate = checkRateLimit(clientIp);
+
+  if (!rate.allowed) {
+    return res.status(429).json({
+      success: false,
+      error: 'Rate limit reached for AI categorization. Please wait 1 minute before making further requests.',
+      resetInMs: rate.resetInMs,
+    });
+  }
+
   try {
-    const { products, availableCategories } = req.body;
+    const { products, availableCategories } = req.body || {};
 
     if (!Array.isArray(products) || products.length === 0) {
-      return res.status(400).json({ error: 'Products array is required.' });
+      return res.status(400).json({ success: false, error: 'Products array is required.' });
     }
 
-    const categoriesList = Array.isArray(availableCategories) && availableCategories.length > 0
-      ? availableCategories.filter((c: string) => c !== 'All Products')
-      : [
-          'Power Tools',
-          'Hand Tools',
-          'Welding & Cutting',
-          'Measuring & Testing',
-          'Workshop Machinery',
-          'Drilling & Fasteners',
-          'Safety & Equipment',
-        ];
-
-    const ai = getGeminiClient();
-
-    // Prepare products overview for Gemini
-    const productItemsText = products.map((p, idx) => {
-      return `Item #${idx + 1} [ID: ${p.id}]:
-- Title: ${p.name || 'Untitled'}
-- Current Category: ${p.category || 'Missing/Uncategorized'}
-- Brand: ${p.brand || 'N/A'}
-- Short Summary: ${p.shortDescription || 'N/A'}
-- Full Details: ${p.fullDescription || 'N/A'}`;
-    }).join('\n\n');
-
-    const prompt = `You are categorizing a batch of industrial/hardware tools for Rawal Tools.
-Below is a list of products that need category assignment or verification.
-
-Allowed Standard Categories:
-${categoriesList.map((c: string) => `- ${c}`).join('\n')}
-
-Products to Analyze:
-${productItemsText}
-
-Analyze each item's title and description carefully. Return an array of recommendations matching each product's ID.`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.7-flash',
-      contents: prompt,
-      config: {
-        systemInstruction: 'You are an expert industrial hardware catalog manager. Analyze product titles, brand names, specifications, and descriptions to assign the most appropriate category.',
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            results: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  id: {
-                    type: Type.STRING,
-                    description: 'The product ID matching the input item.',
-                  },
-                  suggestedCategory: {
-                    type: Type.STRING,
-                    description: 'The recommended category from the allowed list or custom if needed.',
-                  },
-                  confidence: {
-                    type: Type.NUMBER,
-                    description: 'Confidence score between 0 and 1.',
-                  },
-                  reason: {
-                    type: Type.STRING,
-                    description: 'Concise explanation highlighting keywords found in title/description.',
-                  },
-                },
-                required: ['id', 'suggestedCategory', 'confidence', 'reason'],
-              },
-            },
-          },
-          required: ['results'],
-        },
-      },
+    const result = await categorizeBatchWithGemini({
+      products,
+      availableCategories,
     });
-
-    const resultText = response.text || '{"results":[]}';
-    const parsed = JSON.parse(resultText);
 
     return res.json({
       success: true,
-      data: parsed.results || [],
+      data: result.results,
+      provider: result.provider,
+      modelUsed: result.modelUsed,
     });
   } catch (error: any) {
-    console.error('Error in categorize-batch API:', error);
+    console.error('Error in categorize-batch API:', error?.message || error);
     return res.status(500).json({
       success: false,
-      error: error.message || 'Failed to categorize batch with Gemini.',
+      error: 'Unable to complete batch categorization at this moment. Please try again later.',
     });
   }
 });
